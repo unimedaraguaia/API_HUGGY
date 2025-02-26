@@ -4,7 +4,7 @@ const banco = require('oracledb')
 
 // FUNCAO DE CONEXAO COM BANCO
 const conectarBanco = async () => {
-    // Estabelece conexao no banco
+    // Tenta estabelecer conexao no banco
     try {
         // conecta no banco
         const conexao = await banco.getConnection({
@@ -12,10 +12,56 @@ const conectarBanco = async () => {
             password: process.env.PASS,
             connectString: process.env.CONNECT
         })
-        console.log("Conectado ao Banco")
-        // retonra o conector
+        // retorna o conector
         return conexao
     }catch(erro) {
         throw erro; // Lançando erro para tratamento externo
     }   
+}
+
+/**
+ * Funcção que pega o nome de um usuário do banco pelo cpf
+ * @param {*} cpf cpf do usuário que se deseja o nome 
+ * @returns nome do benficiario em caso de sucesso e um erro caso não seja encontrado
+ */
+const pegaNomeUsuario = async (cpf) => {
+    // variavel de conexao
+    let DB 
+    //tenta
+    try {
+        // estabelece conexao com banco
+        DB = await conectarBanco()
+        // executa a consulta no banco
+        const resultado = await DB.execute(
+            `SELECT U.CNOMEUSUA
+             FROM HSSUSUA U
+             WHERE U.C_CPFUSUA = :cpf`,
+            {cpf},
+            {outFormat:banco.OUT_FORMAT_OBJECT}
+        )
+        // retorna resultado
+        return resultado
+
+    }catch(erro) {
+        // caso de erro  lanca a excessão para ser tratada externamente
+        throw erro
+
+    }finally {
+        // Se a conexão ainda existe
+        if(DB) {
+            // tenta fechar a conexao
+            try {
+                // fecha a conexao
+                await DB.close()
+            }catch(erro){
+                // lanca excessão caso nao consiga fechar a conexão
+                throw erro;
+            }
+        }
+    }
+}
+
+// EXPORTANDO FUNCOES
+module.exports = {
+    pegaNomeUsuario
 }
