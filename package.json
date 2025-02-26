@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/unimedaraguaia/API_TEST#readme",
   "dependencies": {
+    "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "nodemon": "^3.1.9",
     "oracledb": "^6.7.2"
