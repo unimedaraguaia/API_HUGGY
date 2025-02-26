@@ -2,7 +2,10 @@
 require('dotenv').config({path: '.env'})
 const banco = require('oracledb')
 
-// FUNCAO DE CONEXAO COM BANCO
+/**
+ * Funçao que conecta com o banco de dados
+ * @returns um conector para o banco em caso de sucesso ou erro a ser tratado
+ */
 const conectarBanco = async () => {
     // Tenta estabelecer conexao no banco
     try {
