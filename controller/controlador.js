@@ -42,3 +42,8 @@ const buscarUsuario = async (req, res) => {
         });
     }
 }
+
+// EXPORTAÇÃO
+module.exports = {
+    buscarUsuario
+}
