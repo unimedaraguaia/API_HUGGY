@@ -1,9 +1,14 @@
 // IMPORTAÇÕES
+require('dotenv').config()
 const express = require('express')
+const rotas = require('./routes/rotas')
 
 // CONFIGURAÇÕES
 const app  = express()
-const porta = 3000
+const porta = process.env.PORT
+
+// USANDO AS ROTAS
+app.use(rotas)
 
 // EXECUTANDO SERVICO
 app.listen(

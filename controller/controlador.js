@@ -1,5 +1,5 @@
 // IMPORTACOES
-const banco = require("../model/banco")
+const banco = require('../model/banco')
 
 /**
  * Função que busca um usuario no banco pelo cpf
