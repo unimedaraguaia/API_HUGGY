@@ -1,5 +1,6 @@
 // IMPORTACOES
 const banco = require('oracledb')
+//require('dotenv').config()
 /**
  * Funçao que conecta com o banco de dados
  * @returns um conector para o banco em caso de sucesso ou erro a ser tratado
@@ -62,7 +63,51 @@ const pegaNomeUsuario = async (cpf) => {
     }
 }
 
+
+/**
+ * Função busca o codigo do titular pelo numero da carteira passada
+ * @param {*} carteira string com o numero de carteira do beneficiário
+ * @returns JSON do resultado da consulta do banco
+ */
+const buscarTitularCarteira = async (carteira) => {
+    // variaveis
+    let BD
+    // tenta conectar ao banco
+    try {
+        BD = await conectarBanco()
+
+        const consulta = await BD.execute(
+            `select u.nnumetitu
+             from hssusua u
+             where u.ccodiusua = :carteira and u.csituusua = 'A'`,
+             {carteira},
+             {outFormat:banco.OUT_FORMAT_OBJECT}
+        )
+
+        return consulta
+
+    }catch(erro) {
+        throw erro
+
+    }finally {
+         // Se a conexão ainda existe
+         if(BD) {
+            // tenta fechar a conexao
+            try {
+                // fecha a conexao
+                await BD.close()
+            }catch(erro){
+                // lanca excessão caso nao consiga fechar a conexão
+                throw erro;
+            }
+        }
+    }
+} 
+
+//buscarTitularCarteira('2357001018378221')
+
 // EXPORTANDO FUNCOES
 module.exports = {
-    pegaNomeUsuario
+    pegaNomeUsuario,
+    buscarTitularCarteira
 }
