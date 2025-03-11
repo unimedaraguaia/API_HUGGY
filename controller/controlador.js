@@ -81,9 +81,47 @@ const buscarCodigoTitular = async (req, res) => {
     }
 }
 
+const buscarBoleto = async (req, res) => {
+    
+    let database
+    const { codigoTitular } = req.params;
+    // Tenta conectar ao banco
+    try {
+        // executar SQL
+        const resultado = await banco.buscaIdBoleto(codigoTitular)
+        
+        if (resultado.rows.length > 0) {
+            // caso de sucesso, nome encontrado
+            res.status(200).json({ 
+                mensagem:"200",
+                titular: resultado.rows[0]
+             });
+        } else {
+            // caso de falha, nome não encontrado
+            res.status(200).json({
+                mensagem: "404",
+                titular:{
+                    "NNUMETITU":""
+                } 
+            });
+            
+        }
+    }catch(erro){
+        console.error("CONEX> ERRO AO ACESSAR BANCO:", erro);
+        // caso de erro de acesso ao banco
+        res.status(200).json({ 
+            mensagem: "500", 
+            titular:{
+                "NNUMETITU":""
+            } 
+        });
+    }
+}
+
 
 // EXPORTAÇÃO
 module.exports = {
     buscarUsuario, 
-    buscarCodigoTitular
+    buscarCodigoTitular, 
+    buscarBoleto
 }
