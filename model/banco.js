@@ -1,6 +1,6 @@
 // IMPORTACOES
 const banco = require('oracledb')
-//require('dotenv').config()
+require('dotenv').config()
 /**
  * Funçao que conecta com o banco de dados
  * @returns um conector para o banco em caso de sucesso ou erro a ser tratado
@@ -104,10 +104,47 @@ const buscarTitularCarteira = async (carteira) => {
     }
 } 
 
-//buscarTitularCarteira('2357001018378221')
+/**
+ * Busca o id do boleto de um titular apartir da data corrente
+ * @param {*} codigoTitular 
+ */
+const buscaIdBoleto = async (codigoTitular) => {
+    let DB
+    // tenta conectar ao banco
+    try {
+        BD = await conectarBanco()
 
+        const consulta = await BD.execute(
+            `select P.nnumerpaga, P.dvencpaga, P.nvencpaga
+             from hsspaga P
+             where P.nnumetitu = :codigoTitular and P.Dvencpaga >= '05/10/2024' and P.cpagopaga = 'N'`,
+             {codigoTitular},
+             {outFormat:banco.OUT_FORMAT_OBJECT}
+        )
+
+        return consulta
+
+    }catch(erro) {
+        throw erro
+
+    }finally {
+         // Se a conexão ainda existe
+         if(BD) {
+            // tenta fechar a conexao
+            try {
+                // fecha a conexao
+                await BD.close()
+            }catch(erro){
+                // lanca excessão caso nao consiga fechar a conexão
+                throw erro;
+            }
+        }
+    }
+}
+//buscarTitularCarteira('2357001018378221')
 // EXPORTANDO FUNCOES
 module.exports = {
     pegaNomeUsuario,
-    buscarTitularCarteira
+    buscarTitularCarteira,
+    buscaIdBoleto
 }
