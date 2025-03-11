@@ -94,13 +94,13 @@ const buscarBoleto = async (req, res) => {
             // caso de sucesso, nome encontrado
             res.status(200).json({ 
                 mensagem:"200",
-                titular: resultado.rows[0]
+                boleto: resultado.rows[0]
              });
         } else {
             // caso de falha, nome não encontrado
             res.status(200).json({
                 mensagem: "404",
-                titular:{
+                boleto:{
                     "NNUMETITU":""
                 } 
             });
@@ -111,12 +111,14 @@ const buscarBoleto = async (req, res) => {
         // caso de erro de acesso ao banco
         res.status(200).json({ 
             mensagem: "500", 
-            titular:{
+            boleto:{
                 "NNUMETITU":""
             } 
         });
     }
 }
+
+
 
 
 // EXPORTAÇÃO
