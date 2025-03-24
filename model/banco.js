@@ -19,9 +19,6 @@ const conectarBanco = async () => {
             password: process.env.PASS,
             connectString: process.env.CONNECT
         
-            /*user: "solus",
-            password: "crm",
-            connectString: "192.0.0.15:1521/crmtst"*/
 
         })
         // retorna o conector
@@ -160,15 +157,16 @@ const buscaIdBoleto2 = async (codigoTitular) => {
 
         // executa consulta com o banco
         const boletos = await BD.execute(
-            `select P.nnumepaga, P.dvencpaga, P.nvencpaga
+            `select P.nnumepaga, P.dvencpaga, P.nvencpaga, P.cinstpaga, P.ccomppaga
              from hsspaga P
-             where P.nnumetitu = :codigoTitular and P.Dvencpaga >= '05/08/2024'`,
+             where P.nnumetitu = :codigoTitular and P.Dvencpaga >= ADD_MONTHS(CURRENT_DATE, -3) and P.cpagopaga = 'N'`,
              {codigoTitular},
              {outFormat:banco.OUT_FORMAT_OBJECT}
         )
         
         // formata a data de vencimento dos boletos para o padrão brasileiro
         formataData(boletos)
+        boletos.rows = removerParcelados(boletos.rows)
 
         // pega os id dos boletos
         let idBoletos = pegarIdBoleto(boletos)
@@ -303,15 +301,40 @@ function adicionaLinhasDigitaveis(boletos, linhas){
     return vetor
 }
 
+
+function removerParcelados(vetor) {
+    for(let i = 0; i < vetor.length; i++) {
+        //console.log(vetor[i])
+        if(vetor[i]['CINSTPAGA'] != null){
+            for(let k = 0; k < vetor.length; k++){
+                if(k != i){
+                    if(vetor[k]['CCOMPPAGA'] == vetor[i]['CCOMPPAGA']){
+                        if(vetor[k]['CINSTPAGA'] == null){
+                            vetor.splice(k, 1)
+                        }
+                    }
+                }
+            }
+        }else{
+            console.log("Noa parcelado")
+        }
+    }
+    return vetor
+}
 //buscaIdBoleto2('62463946')
 
 //linhaPagamento2('6398517')
 
 // EXPORTANDO FUNCOES
 module.exports = {
+    conectarBanco,
     pegaNomeUsuario,
     buscarTitularCarteira,
     buscaIdBoleto,
     buscaIdBoleto2, 
-    linhaPagamento
+    linhaPagamento,
+    formataData,
+    pegarIdBoleto,
+    adicionaLinhasDigitaveis,
+    desconectarBanco
 }
