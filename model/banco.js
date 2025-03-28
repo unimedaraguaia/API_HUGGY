@@ -8,7 +8,7 @@ const banco = require('oracledb')
  */
 const conectarBanco = async () => {
     
-    banco.initOracleClient({ libDir: process.env.PATH_ORACLE })
+    //banco.initOracleClient({ libDir: process.env.PATH_ORACLE })
     
     // Tenta estabelecer conexao no banco
     try {
@@ -56,9 +56,16 @@ const pegaNomeUsuario = async (cpf) => {
         DB = await conectarBanco()
         // executa a consulta no banco
         const resultado = await DB.execute(
-            `SELECT U.CNOMEUSUA
-             FROM HSSUSUA U
-             WHERE U.C_CPFUSUA = :cpf`,
+            `select u.nnumetitu, u.cnomeusua
+            from hssusua u, hssplan p, hsstitu t
+            where u.c_cpfusua = :cpf
+            and u.ctipousua = 'T'
+            and u.csituusua = 'A'
+            and u.nnumeplan = p.nnumeplan
+            and (u.nnumetitu = t.nnumetitu)
+            and p.cnatuplan <> 3
+            and ((t.cboletitu = 's') or (t.cboletitu is null))
+            and t.nnumelopg = 82607630`,
             {cpf},
             {outFormat:banco.OUT_FORMAT_OBJECT}
         )
@@ -90,8 +97,15 @@ const buscarTitularCarteira = async (carteira) => {
 
         const consulta = await BD.execute(
             `select u.nnumetitu, u.cnomeusua
-             from hssusua u
-             where u.ccodiusua = :carteira and u.csituusua = 'A'`,
+             from hssusua u, hsstitu t, hssplan p
+             where u.ccodiusua = :carteira 
+             and u.csituusua = 'A'
+             and u.ctipousua = 'T'
+             and u.nnumeplan = p.nnumeplan
+             and p.cnatuplan <> 3
+             and (u.nnumetitu = t.nnumetitu)
+             and ((t.cboletitu = 's') or (t.cboletitu is null))
+             and t.nnumelopg = 82607630`,
              {carteira},
              {outFormat:banco.OUT_FORMAT_OBJECT}
         )
@@ -144,6 +158,20 @@ const buscaIdBoleto = async (codigoTitular) => {
     }
 }
 
+const buscaBeneficiario = async (digitos) => {
+    try{
+        
+        if(digitos.length == 11) {
+            const consulta = await pegaNomeUsuario(digitos)
+            return consulta
+        }else if(digitos.length == 16){
+            const consulta = await buscarTitularCarteira(digitos)
+            return consulta
+        }
+    }catch(erro) {
+        throw erro
+    }
+}
 
 const buscaIdBoleto2 = async (codigoTitular) => {
     // variaveis
@@ -159,7 +187,9 @@ const buscaIdBoleto2 = async (codigoTitular) => {
         const boletos = await BD.execute(
             `select P.nnumepaga, P.dvencpaga, P.nvencpaga, P.cinstpaga, P.ccomppaga
              from hsspaga P
-             where P.nnumetitu = :codigoTitular and P.Dvencpaga >= ADD_MONTHS(CURRENT_DATE, -3) and P.cpagopaga = 'N'`,
+             where P.nnumetitu = :codigoTitular 
+             and P.Dvencpaga >= '10/06/2024'
+             and P.cpagopaga = 'N'`,
              {codigoTitular},
              {outFormat:banco.OUT_FORMAT_OBJECT}
         )
@@ -301,7 +331,6 @@ function adicionaLinhasDigitaveis(boletos, linhas){
     return vetor
 }
 
-
 function removerParcelados(vetor) {
     for(let i = 0; i < vetor.length; i++) {
         //console.log(vetor[i])
@@ -316,11 +345,12 @@ function removerParcelados(vetor) {
                 }
             }
         }else{
-            console.log("Noa parcelado")
+            console.log("Nao parcelado")
         }
     }
     return vetor
 }
+
 //buscaIdBoleto2('62463946')
 
 //linhaPagamento2('6398517')
@@ -336,5 +366,6 @@ module.exports = {
     formataData,
     pegarIdBoleto,
     adicionaLinhasDigitaveis,
-    desconectarBanco
+    desconectarBanco, 
+    buscaBeneficiario
 }
