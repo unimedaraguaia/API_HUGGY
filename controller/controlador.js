@@ -1,4 +1,5 @@
 // IMPORTACOES
+const { response } = require('express');
 const banco = require('../model/banco')
 
 /**
@@ -18,15 +19,15 @@ const buscarUsuario = async (req, res) => {
         if (resultado.rows.length > 0) {
             // caso de sucesso, nome encontrado
             res.status(200).json({ 
-                mensagem:"Olá",
-                usuario: resultado.rows[0]
+                mensagem:"200",
+                titular: resultado.rows[0]
              });
         } else {
             // caso de falha, nome não encontrado
             res.status(200).json({
-                mensagem: "Desculpe, Usuário não encontrado",
-                usuario:{
-                    "CNOMEUSUA":""
+                mensagem: "404",
+                titular:{
+                    "NNUMETITU":""
                 } 
             });
             
@@ -35,14 +36,13 @@ const buscarUsuario = async (req, res) => {
         console.error("CONEX> ERRO AO ACESSAR BANCO:", erro);
         // caso de erro de acesso ao banco
         res.status(200).json({ 
-            mensagem: "Desculpe, serviço indisponível", 
-            usuario:{
-                "CNOMEUSUA":""
+            mensagem: "500", 
+            titular:{
+                "NNUMETITU":""
             } 
         });
     }
 }
-
 
 const buscarCodigoTitular = async (req, res) => {
     
@@ -81,50 +81,14 @@ const buscarCodigoTitular = async (req, res) => {
     }
 }
 
-const buscarBoleto = async (req, res) => {
+const buscarBeneficiario = async (req, res) => {
     
     let database
-    const { codigoTitular } = req.params;
+    const { digitos } = req.params;
     // Tenta conectar ao banco
     try {
         // executar SQL
-        const resultado = await banco.buscaIdBoleto(codigoTitular)
-        
-        if (resultado.rows.length > 0) {
-            // caso de sucesso, nome encontrado
-            res.status(200).json({ 
-                mensagem:"200",
-                boleto: resultado.rows[0]
-             });
-        } else {
-            // caso de falha, nome não encontrado
-            res.status(200).json({
-                mensagem: "404",
-                boleto:{
-                    "NNUMETITU":""
-                } 
-            });
-            
-        }
-    }catch(erro){
-        console.error("CONEX> ERRO AO ACESSAR BANCO:", erro);
-        // caso de erro de acesso ao banco
-        res.status(200).json({ 
-            mensagem: "500", 
-            boleto:{
-                "NNUMETITU":""
-            } 
-        });
-    }
-}
-
-const buscarLinhaEditavel = async (req, res) => {
-    let database
-    const { idBoleto } = req.params;
-    // Tenta conectar ao banco
-    try {
-        // executar SQL
-        const resultado = await banco.buscarTitularCarteira(carteira)
+        const resultado = await banco.buscaBeneficiario(digitos)
         
         if (resultado.rows.length > 0) {
             // caso de sucesso, nome encontrado
@@ -143,11 +107,86 @@ const buscarLinhaEditavel = async (req, res) => {
             
         }
     }catch(erro){
-        console.error("CONEX> ERRO AO ACESSAR BANCO:", erro);
+        //console.error("CONEX> ERRO AO ACESSAR BANCO:", erro);
         // caso de erro de acesso ao banco
         res.status(200).json({ 
             mensagem: "500", 
             titular:{
+                "NNUMETITU":""
+            } 
+        });
+    }
+}
+
+const buscarBoleto = async (req, res) => {
+    
+    let database
+    const { codigoTitular } = req.params;
+    // Tenta conectar ao banco
+    try {
+        // executar SQL
+        const resultado = await banco.buscaIdBoleto2(codigoTitular)
+        
+        if (resultado.rows.length > 0) {
+            // caso de sucesso, nome encontrado
+            resposta = {mensagem:'200'}
+            for (let i = 0; i < resultado.rows.length; i++) {
+                resposta[`boleto${i + 1}`] = resultado.rows[i]
+            }
+            res.status(200).json(resposta);
+
+        } else {
+            // caso de falha, nome não encontrado
+            res.status(200).json({
+                mensagem: "404",
+                boletos:{
+                    "NNUMETITU":""
+                } 
+            });
+            
+        }
+    }catch(erro){
+        console.error("CONEX> ERRO AO ACESSAR BANCO:", erro);
+        // caso de erro de acesso ao banco
+        res.status(200).json({ 
+            mensagem: "500", 
+            boletos:{
+                "NNUMETITU":""
+            } 
+        });
+    }
+}
+
+const buscarLinhaEditavel = async (req, res) => {
+    let database
+    const { idBoleto } = req.params;
+    // Tenta conectar ao banco
+    try {
+        // executar SQL
+        const resultado = await banco.linhaPagamento(idBoleto)
+        
+        if (resultado.rows.length > 0) {
+            // caso de sucesso, nome encontrado
+            res.status(200).json({ 
+                mensagem:"200",
+                pagar: resultado.rows[0]
+             });
+        } else {
+            // caso de falha, nome não encontrado
+            res.status(200).json({
+                mensagem: "404",
+                pagar:{
+                    "NNUMETITU":""
+                } 
+            });
+            
+        }
+    }catch(erro){
+        console.error("CONEX> ERRO AO ACESSAR BANCO:", erro);
+        // caso de erro de acesso ao banco
+        res.status(200).json({ 
+            mensagem: "500", 
+            pagar:{
                 "NNUMETITU":""
             } 
         });
@@ -160,5 +199,6 @@ module.exports = {
     buscarUsuario, 
     buscarCodigoTitular, 
     buscarBoleto,
-    buscarLinhaEditavel
+    buscarLinhaEditavel,
+    buscarBeneficiario
 }
