@@ -9,7 +9,6 @@ const banco = require('../model/banco')
  */
 const buscarUsuario = async (req, res) => {
     
-    let database
     const { cpf } = req.params;
     // Tenta conectar ao banco
     try {
@@ -33,7 +32,6 @@ const buscarUsuario = async (req, res) => {
             
         }
     }catch(erro){
-        console.error("CONEX> ERRO AO ACESSAR BANCO:", erro);
         // caso de erro de acesso ao banco
         res.status(200).json({ 
             mensagem: "500", 
@@ -44,9 +42,13 @@ const buscarUsuario = async (req, res) => {
     }
 }
 
+/**
+ * Busca um titular por meio do numero de carteirinha
+ * @param {*} req numero da cateirinha
+ * @param {*} res json com a mensagem e o resultado
+ */
 const buscarCodigoTitular = async (req, res) => {
     
-    let database
     const { carteira } = req.params;
     // Tenta conectar ao banco
     try {
@@ -81,9 +83,13 @@ const buscarCodigoTitular = async (req, res) => {
     }
 }
 
+/**
+ * Busca um beneficiário por meio dos digitos passados.
+ * @param {*} req são os digitos que podem ser cpf ou o codigo de carteirinha
+ * @param {*} res json com a mensagem e o resultado.
+ */
 const buscarBeneficiario = async (req, res) => {
     
-    let database
     const { digitos } = req.params;
     // Tenta conectar ao banco
     try {
@@ -107,7 +113,6 @@ const buscarBeneficiario = async (req, res) => {
             
         }
     }catch(erro){
-        //console.error("CONEX> ERRO AO ACESSAR BANCO:", erro);
         // caso de erro de acesso ao banco
         res.status(200).json({ 
             mensagem: "500", 
@@ -118,9 +123,13 @@ const buscarBeneficiario = async (req, res) => {
     }
 }
 
+/**
+ * Busca todos os boletos em aberto de um beneficiario titular
+ * @param {*} req codigo do beneficiário titular
+ * @param {*} res json com a mensagem e o resultado
+ */
 const buscarBoleto = async (req, res) => {
     
-    let database
     const { codigoTitular } = req.params;
     // Tenta conectar ao banco
     try {
@@ -146,7 +155,7 @@ const buscarBoleto = async (req, res) => {
             
         }
     }catch(erro){
-        console.error("CONEX> ERRO AO ACESSAR BANCO:", erro);
+        //console.error("CONEX> ERRO AO ACESSAR BANCO:", erro);
         // caso de erro de acesso ao banco
         res.status(200).json({ 
             mensagem: "500", 
@@ -157,8 +166,13 @@ const buscarBoleto = async (req, res) => {
     }
 }
 
+/**
+ * Busca a linha editavel de um boleto
+ * @param {*} req identificador do boleto as ser buscada a linha digitavel
+ * @param {*} res json com a mensagem e o resultado
+ */
 const buscarLinhaEditavel = async (req, res) => {
-    let database
+    
     const { idBoleto } = req.params;
     // Tenta conectar ao banco
     try {
@@ -182,7 +196,7 @@ const buscarLinhaEditavel = async (req, res) => {
             
         }
     }catch(erro){
-        console.error("CONEX> ERRO AO ACESSAR BANCO:", erro);
+        //console.error("CONEX> ERRO AO ACESSAR BANCO:", erro);
         // caso de erro de acesso ao banco
         res.status(200).json({ 
             mensagem: "500", 
@@ -192,7 +206,6 @@ const buscarLinhaEditavel = async (req, res) => {
         });
     }
 }
-
 
 // EXPORTAÇÃO
 module.exports = {
