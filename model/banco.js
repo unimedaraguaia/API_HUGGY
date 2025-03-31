@@ -28,6 +28,10 @@ const conectarBanco = async () => {
     }   
 }
 
+/**
+ * Faz a desconexão com o banco de dados
+ * @param {} conector conector do banco de dados
+ */
 const desconectarBanco = async (conector) => {
     // Se a conexão ainda existe
     if(conector) {
@@ -82,7 +86,6 @@ const pegaNomeUsuario = async (cpf) => {
     }
 }
 
-
 /**
  * Função busca o codigo do titular pelo numero da carteira passada
  * @param {*} carteira string com o numero de carteira do beneficiário
@@ -127,7 +130,7 @@ const buscarTitularCarteira = async (carteira) => {
  * @param {*} codigoTitular 
  */
 const buscaIdBoleto = async (codigoTitular) => {
-    let DB
+    let BD
     // tenta conectar ao banco
     try {
         BD = await conectarBanco()
@@ -146,7 +149,6 @@ const buscaIdBoleto = async (codigoTitular) => {
         //console.log(DataFormatada)
         consulta.rows[0]['DVENCPAGA'] = DataFormatada
 
-        console.log(consulta)
         return consulta
 
     }catch(erro) {
@@ -154,10 +156,15 @@ const buscaIdBoleto = async (codigoTitular) => {
 
     }finally {
         // desconecta o banco
-        desconectarBanco(DB)
+        desconectarBanco(BD)
     }
 }
 
+/**
+ * Busca dados do beneficiário no banco de dados
+ * @param {*} digitos pode ser o numero de carteira ou pode ser o CPF
+ * @returns lança uma exceção de nao for nem um do dois ou retorna a consulta no caso de sucesso.
+ */
 const buscaBeneficiario = async (digitos) => {
     try{
         
@@ -173,6 +180,11 @@ const buscaBeneficiario = async (digitos) => {
     }
 }
 
+/**
+ * Busca todos os boletos de um titular 
+ * @param {*} codigoTitular codigo do titular
+ * @returns retorna a consulta no banco ou lança um excessão no caso de falha
+ */
 const buscaIdBoleto2 = async (codigoTitular) => {
     // variaveis
     let BD
@@ -237,6 +249,11 @@ const buscaIdBoleto2 = async (codigoTitular) => {
 }
 
 //  FUNÇÃO OBSOLETA (APAGAR)
+/**
+ * Pega as linha digitável de um boleto.
+ * @param {} idPagamento identificados do boleto a ser pago
+ * @returns retorna a consulta no banco ou ou lança uma excessão no caso de falha 
+ */
 const linhaPagamento = async (idPagamento) => {
     // variável
     let DB
@@ -331,6 +348,11 @@ function adicionaLinhasDigitaveis(boletos, linhas){
     return vetor
 }
 
+/**
+ * Remove todos os boletos parcelados deixando apenas as parcelas ou as mensalidades
+ * @param {} vetor array contendo todos os boletos
+ * @returns arrayu contendo apenas o  boletos integrais ou parcelas.
+ */
 function removerParcelados(vetor) {
     for(let i = 0; i < vetor.length; i++) {
         //console.log(vetor[i])
@@ -344,16 +366,10 @@ function removerParcelados(vetor) {
                     }
                 }
             }
-        }else{
-            console.log("Nao parcelado")
         }
     }
     return vetor
 }
-
-//buscaIdBoleto2('62463946')
-
-//linhaPagamento2('6398517')
 
 // EXPORTANDO FUNCOES
 module.exports = {
