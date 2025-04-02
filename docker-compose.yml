@@ -1,0 +1,16 @@
+services:
+  api:
+    container_name: api_huggy_tst
+    build: ./API_TESTE
+    ports:
+      - 3000:3000
+    restart: always
+    env_file:
+      - ./API_TESTE/.env
+    
+  nginx:
+    container_name: nginx_api
+    build: ./NGINX
+    ports:
+      - 80:80
+
