@@ -1,5 +1,7 @@
 // IMPORTACOES
 const banco = require('oracledb')
+require('dotenv').config()
+const crypto = require('crypto');
 //require('dotenv').config()
 
 /**
@@ -12,18 +14,19 @@ const conectarBanco = async () => {
     
     // Tenta estabelecer conexao no banco
     try {
+        //descritando chave
+        const keys = descriptografarDados(process.env.SECRET_KEY, process.env.USER, process.env.PASS, process.env.CONNECT)
         // conecta no banco
         const conexao = await banco.getConnection({
-        
-            user: process.env.USER,
-            password: process.env.PASS,
-            connectString: process.env.CONNECT
-        
-
+            user: keys.USER,
+            password: keys.PASS,
+            connectString: keys.CONNECT
         })
+        console.log(keys)
         // retorna o conector
         return conexao
     }catch(erro) {
+        
         throw erro; // Lançando erro para tratamento externo
     }   
 }
@@ -369,6 +372,26 @@ function removerParcelados(vetor) {
         }
     }
     return vetor
+}
+
+function descriptografarDados(secretKeyHex, userEncrypted, passEncrypted, connectEncrypted) {
+    const algorithm = 'aes-256-cbc';
+    const key = Buffer.from(secretKeyHex, 'hex');
+  
+    function decrypt(encrypted) {
+      const [ivHex, dataHex] = encrypted.split(':');
+      const iv = Buffer.from(ivHex, 'hex');
+      const encryptedText = Buffer.from(dataHex, 'hex');
+      const decipher = crypto.createDecipheriv(algorithm, key, iv);
+      const decrypted = Buffer.concat([decipher.update(encryptedText), decipher.final()]);
+      return decrypted.toString();
+    }
+  
+    return {
+      USER: decrypt(userEncrypted),
+      PASS: decrypt(passEncrypted),
+      CONNECT: decrypt(connectEncrypted)
+    };
 }
 
 // EXPORTANDO FUNCOES
