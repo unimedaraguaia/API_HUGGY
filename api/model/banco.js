@@ -22,7 +22,6 @@ const conectarBanco = async () => {
             password: keys.PASS,
             connectString: keys.CONNECT
         })
-        console.log(keys)
         // retorna o conector
         return conexao
     }catch(erro) {
