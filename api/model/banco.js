@@ -16,7 +16,7 @@ const conectarBanco = async () => {
     try {
         //descritando chave
         const keys = descriptografarDados(SECRET_KEY, USER, PASS, CONNECT)
-        console.log(SECRET_KEY)
+        
         // conecta no banco
         const conexao = await banco.getConnection({
             user: keys.USER,
