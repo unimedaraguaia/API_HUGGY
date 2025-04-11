@@ -2,15 +2,15 @@ services:
   api:
     container_name: api_huggy_tst
     build: ./api
-    ports:
-      - 3000:3000
     restart: always
     env_file:
       - ./api/.env
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
     
   nginx:
     container_name: nginx_api
     build: ./nginx
     ports:
-      - 80:80
+      - 8080:80
 
