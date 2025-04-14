@@ -12,5 +12,5 @@ services:
     container_name: nginx_api
     build: ./nginx
     ports:
-      - 8080:80
+      - 8009:80
 
