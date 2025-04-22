@@ -1,5 +1,4 @@
-
-FROM node:latest
+FROM node:latest-lts
 
 WORKDIR /api
 
