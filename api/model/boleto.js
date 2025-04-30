@@ -1,5 +1,6 @@
 const { jsPDF } = require("jspdf")
 const fs = require("fs")
+const path = require('path');
 
 class Boleto {
     // COnstrutor
@@ -255,8 +256,8 @@ class Boleto {
     }
     // carrega a logo (Problema)
     carregaLogo(doc){
-        let logoBanco = '../img/sicredi.jpg'
-        let logoANS = '../img/Registro ANS.png'
+        let logoBanco = path.join(__dirname, '../img/sicredi.jpg')
+        let logoANS = path.join(__dirname,'../img/Registro ANS.png')
     
         const logoBanco64 = fs.readFileSync(logoBanco, { encoding: 'base64' })
         const logoANS64 = fs.readFileSync(logoANS, { encoding: 'base64' })
