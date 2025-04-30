@@ -1,8 +1,11 @@
 // IMPORTACOES
 const banco = require('oracledb')
+const pdf = require('./boleto')
 //require('dotenv').config()
 const crypto = require('crypto');
-require('dotenv').config()
+const path = require('path');
+const { dir } = require('console');
+//require('dotenv').config()
 const { SECRET_KEY, USER, PASS, CONNECT } = process.env;
 
 /**
@@ -189,60 +192,70 @@ const buscaBeneficiario = async (digitos) => {
  * @returns retorna a consulta no banco ou lança um excessão no caso de falha
  */
 const buscaIdBoleto2 = async (codigoTitular) => {
-    // variaveis
-    let BD
-    let linhas = []
+    
+    let BD              // varivel de conxão com o banco
+    let linhas = []     // arranjo de linhas digitaveis
+    let pathPdf = path.join(__dirname, "../temp/")
 
-    // tenta conectar ao banco
+    // tenta conectar ao banco de dados
     try {
-        // conecta para o banco
-        BD = await conectarBanco()
 
-        // executa consulta com o banco
+        /**
+         * Conecta com o banco de dados, 
+         * pega todo os boletos não pagos de um titular de até 3 mese atrás apartir da data corrente.
+         * formata os boletos e remove os parcelados (deixando apenas as parcelas dos mesmo) 
+         */
+        BD = await conectarBanco()
         const boletos = await BD.execute(
             `select P.nnumepaga, P.dvencpaga, P.nvencpaga, P.cinstpaga, P.ccomppaga
              from hsspaga P
              where P.nnumetitu = :codigoTitular 
-             and P.Dvencpaga >= '10/06/2024'
+             and P.Dvencpaga >= ADD_MONTHS(CURRENT_DATE, -3)
              and P.cpagopaga = 'N'`,
              {codigoTitular},
              {outFormat:banco.OUT_FORMAT_OBJECT}
         )
         
-        // formata a data de vencimento dos boletos para o padrão brasileiro
         formataData(boletos)
         boletos.rows = removerParcelados(boletos.rows)
 
-        // pega os id dos boletos
+        // pega os id dos boletos e inicia o contado de boletos
         let idBoletos = pegarIdBoleto(boletos)
+        let contador = 0
 
-        //consulta cada linha digitavel de cada boleto
+        /** 
+            Consulta cada linha digitavel de cada boleto
+            e adiciona aos boletos respectivamente alem de criar os boletos
+            e adiciona-los a pasta temporária.
+        */
         for (let id of idBoletos) {
-
-            // consulta as linhas digitaveis
+            
             const linhasDigitaveis = await BD.execute(
-                `select B.linha_digitavel
+               `select B.linha_digitavel
                 from table (pkg_boleto_class.boleto(p_id_pagamento => :id,
-                                        p_id_jpaga     => 0,
-                                        p_id_docu      => 0)) B`,
+                p_id_jpaga     => 0,
+                p_id_docu      => 0)) B`,
                 {id},
                 {outFormat:banco.OUT_FORMAT_OBJECT}
             )
-            // caso haja retonos
+            
             if (linhasDigitaveis.rows.length > 0) {
-                // adiciona as linhas no vetor de linhas
-                linhas.push(linhasDigitaveis.rows[0])
+                linhas.push(linhasDigitaveis.rows[0])    
             }
-    
+            
+            let dados = await pegadarDadosBoleto(boletos.rows[contador].NNUMEPAGA)
+            let boleto = new pdf.Boleto(dados)
+            
+            boleto.salve(pathPdf)
+            contador++ 
         }
-        // adiciona as linhas digitaveis e modifica os rows do boleto
+        
         boletos.rows = adicionaLinhasDigitaveis(boletos, linhas)
-        // retorna os boletos
-        //console.log(boletos.rows)
         return boletos
 
     }catch(erro) {
         // lanca exeção para chamador
+        console.log("Erro->Buscar Boleto:", erro)
         throw erro
 
     }finally {
@@ -310,6 +323,34 @@ const formataData = (consulta) => {
         const DataFormatada = data.toLocaleDateString('pt-BR')
         row['DVENCPAGA'] = DataFormatada
     });
+}
+
+const pegadarDadosBoleto = async (idBoleto) => {
+    let BD
+    
+    try{
+        BD = await conectarBanco()
+        let dados
+        const dadosBoleto = await BD.execute(
+            `SELECT A.*,TO_CHAR(A.VENCIMENTO,'DD/MM/YYYY') DATA_VENCIMENTO, DIAS_VALIDADE,
+            BANCO, DIGITO_BANCO, RETORNA_NATUREZA_JURIDICA(A.NNUMETITU) NAT_JURIDICA
+            FROM TABLE(PKG_BOLETO_CLASS.BOLETO(p_id_pagamento => :idBoleto,
+                                        p_id_jpaga     => 0,
+                                        p_id_docu      => 0)) A `,
+            {idBoleto},
+            {outFormat:banco.OUT_FORMAT_OBJECT}
+        )
+       
+        return dadosBoleto.rows[0]
+
+    }catch(erro) {
+        // lanca exeção para chamador
+        throw erro
+
+    }finally {
+        // desconecta o banco
+        desconectarBanco(BD)
+    }
 }
 
 /**
@@ -398,6 +439,7 @@ function descriptografarDados(secretKeyHex, userEncrypted, passEncrypted, connec
     }
 }
 //conectarBanco()
+//pegadarDadosBoleto('6459797')
 // EXPORTANDO FUNCOES
 module.exports = {
     conectarBanco,
