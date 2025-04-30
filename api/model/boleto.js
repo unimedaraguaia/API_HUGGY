@@ -13,6 +13,7 @@ class Boleto {
         this.posX = 10
         this.posY = 268
         this.fileName = dados.NUMERO_DOCUMENTO
+        this.fonte = 'helvetica'
         // Desenha o boleto e adicioan informações
         this.desenhaGrade(this.doc)
         this.instrucoes(this.doc)
@@ -23,7 +24,7 @@ class Boleto {
     }
     // configura a fonte  
     fonteConfig(doc, fonte, tamanho, estilo){
-        doc.setFont(fonte)              //define a fonte
+        doc.setFont(this.fonte)              //define a fonte
         doc.setFontSize(tamanho)        //define o tamanho da fonte
         doc.setFont(undefined, estilo)  //define o estilo com negrito
     }
@@ -158,7 +159,7 @@ class Boleto {
     }
     // carrega os nome dos campos
     nomeCampos(doc) {
-        this.fonteConfig(doc, 'Arial', 6, 'normal')
+        this.fonteConfig(doc, this.fonte, 6, 'normal')
         doc.text('Beneficiário', 11, 64);
         doc.text('Coop. contratante / Cód. Beneficiário', 101, 64);
         doc.text('Espécie', 141, 64);
@@ -225,29 +226,29 @@ class Boleto {
     instrucoes(doc){
         const linha = '-'.repeat(260);
         //Cabeçalho 
-        this.fonteConfig(doc, 'Arial', 10, 'bold')
+        this.fonteConfig(doc, this.fonte, 10, 'bold')
         doc.text('Instruções', 10, doc.previousAutoTable ? doc.lastAutoTable.finalY + 6 : 20); // posição X=10, Y=20 (exemplo)
     
         //Itens cabeçalho 
-        this.fonteConfig(doc, 'Arial', 10, 'normal')
+        this.fonteConfig(doc, this.fonte, 10, 'normal')
         doc.text('1. Imprima em impressora jato de tinta (ink jet) ou laser em qualidade normal ou alta. Não use modo econômico.', 10, 24);
         doc.text('2. Utilize folha A4 (210 x 297 mm) e margens mínimas à esquerda e à direita do formulário.', 10, 28);
     
         //Linha pontilhada 
-        this.fonteConfig(doc, 'Arial', 6, 'normal')
+        this.fonteConfig(doc, this.fonte, 6, 'normal')
         doc.text('Corte na linha pontilhada', 10, 40);
         doc.text(linha, 10, 44);
     
-        this.fonteConfig(doc, 'Arial', 10, 'Nomal')
+        this.fonteConfig(doc, this.fonte, 10, 'normal')
         doc.text('2ª VIA', 10, 100)
         doc.text('Este documento é somente para fins de pagamento, para mais informações consultar o demonstrativo.', 10, 105)
     
-        this.fonteConfig(doc, 'Arial', 6, 'normal')
+        this.fonteConfig(doc, this.fonte, 6, 'normal')
         doc.text('Corte na linha pontilhada', 10, 120);
         doc.text(linha, 10, 124);
     
     
-        this.fonteConfig(doc, 'Arial', 6, 'bold')
+        this.fonteConfig(doc, this.fonte, 6, 'bold')
         doc.text('Instruções (Texto de responsabilidade do cedente)', 11, 192)
     
         
@@ -277,12 +278,13 @@ class Boleto {
         }
     }
     addInfo(doc, dados){
-        doc.setFont('Arial', 'bold')             //define a fonte
+        
+        doc.setFont(this.fonte, 'bold')             //define a fonte
         doc.setFontSize(12)
         doc.text(`${dados.BANCO}-${dados.DIGITO_BANCO}`, 56.5, 58 )
         doc.text(`${dados.LINHA_DIGITAVEL}`, 78, 58)
         
-        doc.setFont('Arial', 'bold')             //define a fonte
+        doc.setFont(this.fonte, 'bold')             //define a fonte
         doc.setFontSize(7)
         
         doc.text(`${dados.CEDENTE}`, 11, 68)
@@ -299,12 +301,12 @@ class Boleto {
         
         doc.text(`${dados.NOME_SACADO} / ${this.formataCPF(dados.CNPJ_CPF_SACADO)}`, 11, 94)
        
-        doc.setFont('Arial', 'bold')             //define a fonte
+        doc.setFont(this.fonte, 'bold')             //define a fonte
         doc.setFontSize(12)
         doc.text(`${dados.BANCO}-${dados.DIGITO_BANCO}`, 56.5, 150 )
         doc.text(`${dados.LINHA_DIGITAVEL}`, 78, 150)
     
-        doc.setFont('Arial', 'bold')             //define a fonte
+        doc.setFont(this.fonte, 'bold')             //define a fonte
         doc.setFontSize(7)
     
         doc.text(`${dados.LOCAL_PAGAMENTO}`, 11, 161)
@@ -327,18 +329,19 @@ class Boleto {
         doc.text(`${this.formatarValor(dados.VALOR)}`, 111, 187)
         doc.text(`${this.formatarValor(dados.VALOR_NOTA)}`, 141, 187)
     
-        doc.setFont('Arial', 'bold')             //define a fonte
-        doc.setFontSize(5)
+        doc.setFont(this.fonte, 'bold')             //define a fonte
+        doc.setFontSize(4.5)
         doc.text(`${dados.INSTRUCOES}`, 11, 194)
-    
+        
+        doc.setFontSize(6)
         doc.text(`${dados.PLANO_SACADO}`, 71, 192)
         doc.text(`Competênica: ${dados.COMPETENCIA}`, 111, 194)
     
-        doc.setFont('Arial', 'bold')             //define a fonte
+        doc.setFont(this.fonte, 'bold')             //define a fonte
         doc.setFontSize(10)
         doc.text(`${dados.DESC_JUROS}`, 10, 230)
     
-        doc.setFont('Arial', 'bold')             //define a fonte
+        doc.setFont(this.fonte, 'bold')             //define a fonte
         doc.setFontSize(8)
         doc.text(`${dados.NOME_SACADO}`, 11, 246)
         doc.text(`${dados.ENDERECO1}`, 11, 250)
