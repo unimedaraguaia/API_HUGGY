@@ -195,6 +195,7 @@ const buscaIdBoleto2 = async (codigoTitular) => {
     
     let BD              // varivel de conxão com o banco
     let linhas = []     // arranjo de linhas digitaveis
+    let enderecos = []
     let pathPdf = path.join(__dirname, "../temp/")
 
     // tenta conectar ao banco de dados
@@ -240,17 +241,20 @@ const buscaIdBoleto2 = async (codigoTitular) => {
             )
             
             if (linhasDigitaveis.rows.length > 0) {
-                linhas.push(linhasDigitaveis.rows[0])    
+                let dados = await pegadarDadosBoleto(boletos.rows[contador].NNUMEPAGA)
+                let boleto = new pdf.Boleto(dados)
+                boleto.salve(pathPdf)
+                linhas.push(linhasDigitaveis.rows[0])
+                let localFile = `${process.env.ADDRESS_SERVICE}:${process.env.PORT}/temp/${dados.NUMERO_DOCUMENTO.replace(/\s+/g, "")}.pdf`
+                //console.log(localFile)
+                enderecos.push(localFile)
             }
             
-            let dados = await pegadarDadosBoleto(boletos.rows[contador].NNUMEPAGA)
-            let boleto = new pdf.Boleto(dados)
-            
-            boleto.salve(pathPdf)
             contador++ 
         }
         
-        boletos.rows = adicionaLinhasDigitaveis(boletos, linhas)
+        boletos.rows = adicionaLinhasDigitaveis(boletos, linhas, enderecos)
+        console.log(enderecos)
         return boletos
 
     }catch(erro) {
@@ -372,7 +376,7 @@ function pegarIdBoleto(consulta){
  * @param {*} linhas vetor co linhas digitaveis de cada boleto
  * @returns // vetor com os dados formatados
  */
-function adicionaLinhasDigitaveis(boletos, linhas){
+function adicionaLinhasDigitaveis(boletos, linhas, localBoletos){
     // variavel
     let resposta = {}
     let vetor = []
@@ -380,6 +384,7 @@ function adicionaLinhasDigitaveis(boletos, linhas){
     for (let i = 0; i < boletos.rows.length; i++) {
         // adicionando as linhas digitaveis
         boletos.rows[i]['LINHA_DIGITAVEL'] = linhas[i]['LINHA_DIGITAVEL']
+        boletos.rows[i]['LOCAL_BOLETO'] = localBoletos[i]
         // formatando campo de boletos
         //resposta[`boleto${i + 1}`] = boletos.rows[i]
         vetor.push(boletos.rows[i])
