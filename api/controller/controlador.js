@@ -1,6 +1,7 @@
 // IMPORTACOES
 const { response } = require('express');
 const banco = require('../model/banco')
+const shortLinks = require('../util/encurtador')
 
 /**
  * Função que busca um usuario no banco pelo cpf
@@ -207,11 +208,21 @@ const buscarLinhaEditavel = async (req, res) => {
     }
 }
 
+const pegaLink = async (req, res) => {
+    const destino = shortLinks.get(req.params.id);
+    if (destino) {
+        console.log('Redirecionando para:', destino);
+        return res.redirect(destino);
+    }
+    res.status(404).send('Link não encontrado');
+}
+
 // EXPORTAÇÃO
 module.exports = {
     buscarUsuario, 
     buscarCodigoTitular, 
     buscarBoleto,
     buscarLinhaEditavel,
-    buscarBeneficiario
+    buscarBeneficiario, 
+    pegaLink
 }
