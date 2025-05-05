@@ -4,9 +4,10 @@ const pdf = require('./boleto')
 //require('dotenv').config()
 const crypto = require('crypto');
 const path = require('path');
-const { dir } = require('console');
+const shortLinks = require('../util/encurtador')
 //require('dotenv').config()
-const { SECRET_KEY, USER, PASS, CONNECT } = process.env;
+const { SECRET_KEY, USER, PASS, CONNECT,} = process.env;
+const { NGINX_PORT } = process.env;
 
 /**
  * Funçao que conecta com o banco de dados
@@ -246,6 +247,7 @@ const buscaIdBoleto2 = async (codigoTitular) => {
                 boleto.salve(pathPdf)
                 linhas.push(linhasDigitaveis.rows[0])
                 let localFile = `${process.env.ADDRESS_SERVICE}:${process.env.PORT}/temp/${dados.NUMERO_DOCUMENTO.replace(/\s+/g, "")}.pdf`
+                localFile = encutardarLink(localFile)
                 //console.log(localFile)
                 enderecos.push(localFile)
             }
@@ -443,8 +445,17 @@ function descriptografarDados(secretKeyHex, userEncrypted, passEncrypted, connec
         throw erro;
     }
 }
+
+function encutardarLink(link) {
+    const base = `${process.env.ADDRESS_SERVICE}:${NGINX_PORT}`
+    const id = Math.random().toString(36).substring(2, 8)
+    shortLinks.set(id, link)
+    return `${base}/${id}`
+}
 //conectarBanco()
 //pegadarDadosBoleto('6459797')
+
+console.log(NGINX_PORT)
 // EXPORTANDO FUNCOES
 module.exports = {
     conectarBanco,
