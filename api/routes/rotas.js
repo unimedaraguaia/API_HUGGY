@@ -8,6 +8,7 @@ rotas.get('/titular/:carteira', controlador.buscarCodigoTitular)
 rotas.get('/boleto/:codigoTitular', controlador.buscarBoleto)
 rotas.get('/pagar/:idBoleto', controlador.buscarLinhaEditavel)
 rotas.get('/beneficiario/:digitos', controlador.buscarBeneficiario)
+rotas.get('/:id', controlador.pegaLink)
 
 // EXPORTACOES
 module.exports = rotas
