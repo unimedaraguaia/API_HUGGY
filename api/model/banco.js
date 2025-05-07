@@ -1,36 +1,31 @@
 // IMPORTACOES
-const banco = require('oracledb')
-const pdf = require('./boleto')
-//require('dotenv').config()
-const crypto = require('crypto');
-const path = require('path');
-const { dir } = require('console');
-//require('dotenv').config()
-const { SECRET_KEY, USER, PASS, CONNECT } = process.env;
+const banco = require('oracledb')  // biblioteca oracle DB
+const crypto = require('crypto');  // biblioteca de cryptografia
+const path = require('path');      // biblioteca para path
+const shortLinks = require('../util/encurtador') // arquivo encurtador de links
+const pdf = require('./boleto')    // arquivo que gera boleto
+const { SECRET_KEY, USER, PASS, CONNECT,} = process.env; // constantes de acesso
+const { NGINX_PORT } = process.env; // constantes de porta do NGINX
+
 
 /**
- * Funçao que conecta com o banco de dados
+ * Estabelece conexão com o banco de dados
  * @returns um conector para o banco em caso de sucesso ou erro a ser tratado
  */
+
 const conectarBanco = async () => {
+    // linha para a ser abilitada para produção
     //banco.initOracleClient({ libDir: process.env.PATH_ORACLE })
-    
-    // Tenta estabelecer conexao no banco
-    try {
-        //descritando chave
+    try { 
         const keys = descriptografarDados(SECRET_KEY, USER, PASS, CONNECT)
-        
-        // conecta no banco
         const conexao = await banco.getConnection({
             user: keys.USER,
             password: keys.PASS,
             connectString: keys.CONNECT
         })
-        // retorna o conector
-        return conexao
-    }catch(erro) {
-        console.log(erro)
-        throw erro; // Lançando erro para tratamento externo
+        return conexao 
+    }catch(erro) { 
+        throw erro; 
     }   
 }
 
@@ -38,15 +33,11 @@ const conectarBanco = async () => {
  * Faz a desconexão com o banco de dados
  * @param {} conector conector do banco de dados
  */
-const desconectarBanco = async (conector) => {
-    // Se a conexão ainda existe
+const desconectarBanco = async (conector) => { 
     if(conector) {
-        // tenta fechar a conexao
         try {
-            // fecha a conexao
             await conector.close()
-        }catch(erro){
-            // lanca excessão caso nao consiga fechar a conexão
+        }catch(erro) {
             throw erro;
         }
     }
@@ -58,13 +49,9 @@ const desconectarBanco = async (conector) => {
  * @returns nome do benficiario em caso de sucesso e um erro caso não seja encontrado
  */
 const pegaNomeUsuario = async (cpf) => {
-    // variavel de conexao
     let DB 
-    //tenta
     try {
-        // estabelece conexao com banco
         DB = await conectarBanco()
-        // executa a consulta no banco
         const resultado = await DB.execute(
             `select u.nnumetitu, u.cnomeusua
             from hssusua u, hssplan p, hsstitu t
@@ -79,15 +66,10 @@ const pegaNomeUsuario = async (cpf) => {
             {cpf},
             {outFormat:banco.OUT_FORMAT_OBJECT}
         )
-        // retorna resultado
         return resultado
-
     }catch(erro) {
-        // caso de erro  lanca a excessão para ser tratada externamente
         throw erro
-
     }finally {
-        // desconecta o banco
         desconectarBanco(DB)
     }
 }
@@ -98,12 +80,9 @@ const pegaNomeUsuario = async (cpf) => {
  * @returns JSON do resultado da consulta do banco
  */
 const buscarTitularCarteira = async (carteira) => {
-    // variaveis
     let BD
-    // tenta conectar ao banco
     try {
         BD = await conectarBanco()
-
         const consulta = await BD.execute(
             `select u.nnumetitu, u.cnomeusua
              from hssusua u, hsstitu t, hssplan p
@@ -118,14 +97,10 @@ const buscarTitularCarteira = async (carteira) => {
              {carteira},
              {outFormat:banco.OUT_FORMAT_OBJECT}
         )
-
         return consulta
-
     }catch(erro) {
         throw erro
-
     }finally {
-        // desconecta o banco
         desconectarBanco(BD)
     }
 } 
@@ -137,10 +112,8 @@ const buscarTitularCarteira = async (carteira) => {
  */
 const buscaIdBoleto = async (codigoTitular) => {
     let BD
-    // tenta conectar ao banco
     try {
         BD = await conectarBanco()
-
         const consulta = await BD.execute(
             `select P.nnumepaga, P.dvencpaga, P.nvencpaga
              from hsspaga P
@@ -168,12 +141,11 @@ const buscaIdBoleto = async (codigoTitular) => {
 
 /**
  * Busca dados do beneficiário no banco de dados
- * @param {*} digitos pode ser o numero de carteira ou pode ser o CPF
+ * @param {*} digitos pode ser o numero de carteira com 16 digitos ou pode ser o CPF com 11 digitos
  * @returns lança uma exceção de nao for nem um do dois ou retorna a consulta no caso de sucesso.
  */
 const buscaBeneficiario = async (digitos) => {
     try{
-        
         if(digitos.length == 11) {
             const consulta = await pegaNomeUsuario(digitos)
             return consulta
@@ -187,24 +159,21 @@ const buscaBeneficiario = async (digitos) => {
 }
 
 /**
- * Busca todos os boletos de um titular 
+ * Busca todos os boletos de um titular
+ * Conecta com o banco de dados, 
+ * pega todo os boletos não pagos de um titular de até 3 mese atrás apartir da data corrente.
+ * formata os boletos e remove os parcelados (deixando apenas as parcelas dos mesmo) 
  * @param {*} codigoTitular codigo do titular
  * @returns retorna a consulta no banco ou lança um excessão no caso de falha
  */
 const buscaIdBoleto2 = async (codigoTitular) => {
     
-    let BD              // varivel de conxão com o banco
-    let linhas = []     // arranjo de linhas digitaveis
+    let BD              
+    let linhas = []     
+    let enderecos = []
     let pathPdf = path.join(__dirname, "../temp/")
-
-    // tenta conectar ao banco de dados
+    
     try {
-
-        /**
-         * Conecta com o banco de dados, 
-         * pega todo os boletos não pagos de um titular de até 3 mese atrás apartir da data corrente.
-         * formata os boletos e remove os parcelados (deixando apenas as parcelas dos mesmo) 
-         */
         BD = await conectarBanco()
         const boletos = await BD.execute(
             `select P.nnumepaga, P.dvencpaga, P.nvencpaga, P.cinstpaga, P.ccomppaga
@@ -215,11 +184,9 @@ const buscaIdBoleto2 = async (codigoTitular) => {
              {codigoTitular},
              {outFormat:banco.OUT_FORMAT_OBJECT}
         )
-        
         formataData(boletos)
         boletos.rows = removerParcelados(boletos.rows)
 
-        // pega os id dos boletos e inicia o contado de boletos
         let idBoletos = pegarIdBoleto(boletos)
         let contador = 0
 
@@ -240,27 +207,27 @@ const buscaIdBoleto2 = async (codigoTitular) => {
             )
             
             if (linhasDigitaveis.rows.length > 0) {
-                linhas.push(linhasDigitaveis.rows[0])    
+                let dados = await pegadarDadosBoleto(boletos.rows[contador].NNUMEPAGA)
+                let boleto = new pdf.Boleto(dados)
+
+                boleto.salve(pathPdf)
+                linhas.push(linhasDigitaveis.rows[0])
+
+                let localFile = `${process.env.ADDRESS_SERVICE}:${NGINX_PORT}/temp/${dados.NUMERO_DOCUMENTO.replace(/\s+/g, "")}.pdf`
+                localFile = encutardarLink(localFile)
+               
+                enderecos.push(localFile)
             }
-            
-            let dados = await pegadarDadosBoleto(boletos.rows[contador].NNUMEPAGA)
-            let boleto = new pdf.Boleto(dados)
-            
-            boleto.salve(pathPdf)
             contador++ 
         }
         
-        boletos.rows = adicionaLinhasDigitaveis(boletos, linhas)
+        boletos.rows = adicionaLinhasDigitaveis(boletos, linhas, enderecos)
+        console.log(enderecos)
         return boletos
-
     }catch(erro) {
-        // lanca exeção para chamador
-        console.log("Erro->Buscar Boleto:", erro)
-        throw erro
-
-    }finally {
-        // desconecta o banco
-        desconectarBanco(BD)
+        throw erro 
+    }finally {   
+        desconectarBanco(BD) // desconecta o banco
     }
 }
 
@@ -325,12 +292,15 @@ const formataData = (consulta) => {
     });
 }
 
+/**
+ * Obtem todas as informações necessárias de um boleto para montar o PDF
+ * @param {*} idBoleto identificador do boleto
+ * @returns retorna os dados do boleto ou lança uma excessão
+ */
 const pegadarDadosBoleto = async (idBoleto) => {
     let BD
-    
     try{
         BD = await conectarBanco()
-        let dados
         const dadosBoleto = await BD.execute(
             `SELECT A.*,TO_CHAR(A.VENCIMENTO,'DD/MM/YYYY') DATA_VENCIMENTO, DIAS_VALIDADE,
             BANCO, DIGITO_BANCO, RETORNA_NATUREZA_JURIDICA(A.NNUMETITU) NAT_JURIDICA
@@ -340,22 +310,17 @@ const pegadarDadosBoleto = async (idBoleto) => {
             {idBoleto},
             {outFormat:banco.OUT_FORMAT_OBJECT}
         )
-       
         return dadosBoleto.rows[0]
-
     }catch(erro) {
-        // lanca exeção para chamador
         throw erro
-
     }finally {
-        // desconecta o banco
         desconectarBanco(BD)
     }
 }
 
 /**
- * Pega os identificadores dos boletos passado 
- * @param {*} consulta consulta do banco contendo dados dos boletos
+ * Pega os identificadores dos boletos consultados
+ * @param {*} consulta consulta do banco contendo os boletos
  * @returns vetor contendo os numeros dos identificadores dos boletos
  */
 function pegarIdBoleto(consulta){
@@ -372,23 +337,14 @@ function pegarIdBoleto(consulta){
  * @param {*} linhas vetor co linhas digitaveis de cada boleto
  * @returns // vetor com os dados formatados
  */
-function adicionaLinhasDigitaveis(boletos, linhas){
+function adicionaLinhasDigitaveis(boletos, linhas, localBoletos){
     // variavel
-    let resposta = {}
     let vetor = []
-    // percorre pelos boletos 
     for (let i = 0; i < boletos.rows.length; i++) {
-        // adicionando as linhas digitaveis
         boletos.rows[i]['LINHA_DIGITAVEL'] = linhas[i]['LINHA_DIGITAVEL']
-        // formatando campo de boletos
-        //resposta[`boleto${i + 1}`] = boletos.rows[i]
+        boletos.rows[i]['LOCAL_BOLETO'] = localBoletos[i]
         vetor.push(boletos.rows[i])
     }
-    // adicona resposta ao vetor
-    //vetor.push(resposta)
-
-    // retorna resultados
-    //console.log(vetor)
     return vetor
 }
 
@@ -415,8 +371,15 @@ function removerParcelados(vetor) {
     return vetor
 }
 
+/**
+ * Desencripta as chaves de acesso ao banco
+ * @param {*} secretKeyHex 
+ * @param {*} userEncrypted 
+ * @param {*} passEncrypted 
+ * @param {*} connectEncrypted 
+ * @returns 
+ */
 function descriptografarDados(secretKeyHex, userEncrypted, passEncrypted, connectEncrypted) {
-    
     try{
         const algorithm = 'aes-256-cbc';
         const key = Buffer.from(secretKeyHex, 'hex');
@@ -429,6 +392,7 @@ function descriptografarDados(secretKeyHex, userEncrypted, passEncrypted, connec
             const decrypted = Buffer.concat([decipher.update(encryptedText), decipher.final()]);
             return decrypted.toString();
         }
+
         return {
             USER: decrypt(userEncrypted),
             PASS: decrypt(passEncrypted),
@@ -438,8 +402,19 @@ function descriptografarDados(secretKeyHex, userEncrypted, passEncrypted, connec
         throw erro;
     }
 }
-//conectarBanco()
-//pegadarDadosBoleto('6459797')
+
+/**
+ * Encurta o link de acesso ao boleto
+ * @param {*} link 
+ * @returns 
+ */
+function encutardarLink(link) {
+    const base = `${process.env.ADDRESS_SERVICE}:${NGINX_PORT}`
+    const id = Math.random().toString(36).substring(2, 8)
+    shortLinks.set(id, link)
+    return `${base}/${id}`
+}
+
 // EXPORTANDO FUNCOES
 module.exports = {
     conectarBanco,
