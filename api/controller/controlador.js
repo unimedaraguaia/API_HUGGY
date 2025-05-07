@@ -185,10 +185,7 @@ const pegaLink = async (req, res) => {
 
 // EXPORTAÇÃO
 module.exports = {
-    buscarUsuario, 
-    buscarCodigoTitular, 
     buscarBoleto,
-    buscarLinhaEditavel,
     buscarBeneficiario, 
     pegaLink
 }
