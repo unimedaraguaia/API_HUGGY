@@ -24,6 +24,9 @@
     "fs": "^0.0.1-security",
     "jspdf": "^3.0.1",
     "nodemon": "^3.1.9",
-    "oracledb": "^6.7.2"
+    "oracledb": "^6.7.2",
+    "swagger-ui-express": "^5.0.1",
+    "yaml": "^2.8.0",
+    "yamljs": "^0.3.0"
   }
 }
