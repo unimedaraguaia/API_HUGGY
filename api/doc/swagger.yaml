@@ -1,0 +1,82 @@
+openapi: '3.0.3'
+info:
+  title: API_UNIMED Huggy
+  description: |
+   A API_UNIMED foi desenvolvida para fornecer serviços de consulta de dados utilizados em automações integradas à plataforma Huggy.
+   Seu uso é exclusivo para aplicações internas, atuando como suporte ao sistema de envio de mensagens automatizadas.
+   A API realiza verificações específicas, como a confirmação de que o solicitante é um beneficiário titular, dependendo do serviço requisitado. 
+   A comunicação ocorre via HTTP, com os dados sendo passados pela URL, e as respostas são retornadas no formato JSON.
+   Por questões de segurança, a API não pode ser acessada diretamente ela aceita apenas requisições originadas dos servidores da plataforma Huggy. 
+  version: '1.3.0'
+servers:
+  - url: http://localhost:3000
+    description: Acesso local
+
+paths: 
+  /usuario/{cpf}:
+    get:
+      summary: Identifica usuario
+      description: Por meio do CPF identifica o o nome e o id do usuario
+      responses:
+        '200':
+          $ref: "#/components/responses/responseUsuario"
+        '404':
+          $ref: "#/components/responses/naoEncontrado"
+        '500':
+          $ref: "#/components/responses/indisponivel"
+
+components: 
+  responses:
+    responseUsuario:
+      description: Detalhes de usuario
+      content:
+        application/json:
+          schema: 
+            $ref: "#/components/schemas/usuario"
+    
+    naoEncontrado:
+      description: Não foram encontrado os dados solicitados
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Erro_404"
+    
+    indisponivel:
+      description: Serviços está indisponivel
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Erro_500"
+  
+  schemas:
+
+    usuario:
+      type: object
+      properties:
+        mensagem:
+          type: string
+          description: codigo de retorno para a API da Huggy
+          example: "200"
+        titular:
+          type: array
+          description: Nome do id e nome do beneficiário
+          example: [2350000, 'JOAO PAULO SILVA']
+    
+    Erro_404:
+      type: object
+      properties:
+        mensagem:
+          type: string
+          description: Não encontrado
+          example: 404
+    
+    Erro_500:
+      type: object
+      properties:
+        mensagem:
+          type: string
+          description: Serviço indisponível
+          example: 500
+    
+    
+  
