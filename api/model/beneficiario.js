@@ -2,10 +2,7 @@ const banco = require('./banco')
 
 class Beneficiario {
     
-    /*
-        Verifica se o cpf passado é de um titular ativo
-        -> Em caso positivo retorna o numero do titular e o nome
-    */
+    // verifica se o cpf passado pertence a um titular ativo
     async ehTitularAtivo(cpf){
         let conexao
         try{
@@ -15,6 +12,7 @@ class Beneficiario {
                  FROM HSSUSUA U
                  WHERE U.C_CPFUSUA = :cpf
                  AND U.CSITUUSUA = 'A'
+                 AND U.CTIPOUSUA = 'T'
                 `,
                 {cpf},
                 {outFormat:banco.OUT_FORMAT_OBJECT}
@@ -29,11 +27,8 @@ class Beneficiario {
   
     // FUNÇÕES PARA FINS DE 2º VIA DE BOLETOS
 
-    /**
-     * Bucar dados do titular por meiro de um cpf passado
-     * -> retorna o numero e nome do titular
-     */
-    async buscarTitularCpf(cpf){
+    // Verifica se o cpf passado é de um titular ativo que pode obter o boleto online
+    async buscarTitularBoletoCpf(cpf){
         let conexao 
         try {
             conexao = await banco.conectarBanco()
@@ -61,11 +56,8 @@ class Beneficiario {
         }
     }
 
-    /**
-     * Bucar dados do titular por meiro de um cpf passado
-     * -> retorna o numero e nome do titular
-     */
-    async buscarTitularCarteira(carteira){
+    // verifica se o numero de carteirinha passado é um de um titular ativo que pode ter obter boleto online
+    async buscarTitularBoletoCarteira(carteira){
         let conexao
         try{
             conexao = await banco.conectarBanco()
@@ -93,18 +85,15 @@ class Beneficiario {
         }
     }
 
-    /**
-     * Pega dados do beneficiario para fins de segunda via de boletos
-     * Por meio dos digitos passados identifca se é carteira ou cpf
-     */
-    async buscarBeneficiarioTitularBoleto(digitos){
+    // verifica se os digitos passados é um cpf ou uma carteirinha de um titular que pode obter o boleto online
+    async buscarTitularBoleto(digitos){
         try {
             if(digitos.length == 11) {
-                const consulta = await this.buscarTitularCpf(digitos) 
+                const consulta = await this.buscarTitularBoletoCpf(digitos) 
                 return consulta
             }
             else if(digitos.length == 16) {
-                const consulta = await this.buscarTitularCarteira(digitos)
+                const consulta = await this.buscarTitularBoletoCarteira(digitos)
                 return consulta
             }
         }
