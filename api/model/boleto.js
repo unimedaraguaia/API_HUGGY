@@ -6,6 +6,7 @@ const pdf = require('./pdf');
 const pathPdf = path.join(__dirname, "../temp/")
 class Boleto {
 
+    // busca os boletos não pagos de um titular em até 3 meses
     async buscarBoletosTitular(codigoTitular) {
         let conexao
         try {
@@ -21,7 +22,7 @@ class Boleto {
                 {codigoTitular},
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
-    
+            
             boletos.rows = this.removerBoletosParcelados(boletos.rows)
             
             let listaIds = this.pegarIdBoletos(boletos)
@@ -40,10 +41,10 @@ class Boleto {
         }
     }
     
+    // pega as linhas digitaveis de cada boleto criando uma lista
     async pegarLinhasDigitaveis(listaIds) {
         let conexao
         let linhas = []
-        let endereco = []
         try {
             conexao = await banco.conectarBanco()
             for(let id of listaIds) {
@@ -64,15 +65,14 @@ class Boleto {
             return linhas
         }
         catch(erro) {
-            console.log(erro)
             throw erro
-            
         }
         finally {
             banco.desconectarBanco(conexao)
         }
     }
 
+    // pega os dados de cada boleto pelo identificador
     async pegarDadosBoleto(idBoleto) {
         let conexao
         try{
@@ -88,11 +88,9 @@ class Boleto {
                 {idBoleto},
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
-            console.log(dadosBoleto.rows[0])
             return dadosBoleto.rows[0]
         }
         catch(erro) {
-            console.log(erro)
             throw erro
         }
         finally{
@@ -100,6 +98,7 @@ class Boleto {
         }
     }
 
+    // cria os boletos de acordo com as informações encontradas e salva na pasta temp
     async criarBoletos(boletos){
         let endereco = []
         try{
@@ -112,21 +111,17 @@ class Boleto {
                 //localFile = this.encurtarLink(localFile)
                 endereco.push(localFile)
             }
-
             return  endereco
         }
         catch(erro) {
-            console.log(erro)
             throw erro
         }
     }
 
-    // FUNCÇÕES AUXILIARES
+    // FUNÇÕES AUXILIARES
 
-    /**
-     * Remove todo os boletos parcelados da lista de boletos
-     * deixa a apenas as parcela ou boletos que são integrais
-     */
+    // Remove todo os boletos parcelados da lista de boleto deixa a apenas as parcela ou 
+    // boletos que são integrais
     removerBoletosParcelados(listaBoletos) {
         for(let indice = 0; indice < listaBoletos.length; indice++) {
             if(listaBoletos[indice]['CINSTPAGA'] != null) {
@@ -144,9 +139,7 @@ class Boleto {
         return listaBoletos
     }
 
-    /*
-     * Pega os indentificadores de cada boleto e coloca em uma lista e a retorna
-     */
+    // Pega os indentificadores de cada boleto e coloca em uma lista e a retorna
     pegarIdBoletos(listaBoletos) {
         let listaIds = []
         for(let indice = 0; indice < listaBoletos.rows.length; indice++) {
@@ -155,13 +148,13 @@ class Boleto {
         return listaIds
     }
 
+    // Adiciona linhas digitaveis e endereços de acesso aos boletos
     adicionaLinhasDigitaveisEendereco(boletos, linhas, localBoletos) {
         let novoRows = []
         for(let indice = 0; indice < boletos.rows.length; indice++) {
             boletos.rows[indice]['LINHA_DIGITAVEL'] = linhas[indice]['LINHA_DIGITAVEL']
             boletos.rows[indice]['LOCAL_BOLETO'] = localBoletos[indice]
             novoRows.push(boletos.rows[indice])
-            
         }
         return novoRows
     }
