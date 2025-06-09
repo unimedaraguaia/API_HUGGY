@@ -3,92 +3,26 @@ const banco = require('../model/banco')             // conector de banco
 const shortLinks = require('../util/encurtador')    // mapeador de links encurtados
 const beneficiario = require('../model/beneficiario')
 const boleto = require("../model/boleto")
+const guia = require('../model/guia')
 
 const Beneficiario = new beneficiario.Beneficiario()
 const Boleto = new boleto.Boleto()
+const Guia = new guia.Guia()
 
-/**
- * Busca um usuario no banco pelo cpf
- * @param {*} req requisição com o cpf da pessoa do qual se deseja o nome
- * @param {*} res resposta em JSON para status da consulta
- */
-const buscarUsuarioCpf = async (req, res) => {
-    const { cpf } = req.params;
-    try {
-        const resultado = await Beneficiario.buscarTitularCpf(cpf)
-        if (resultado.rows.length > 0) {
-            res.status(200).json(
-                { 
-                    mensagem:"200",
-                    titular: resultado.rows[0]
-                }
-            );
-        } 
-        else {
-            res.status(200).json(
-                {
-                    mensagem: "404"
-                }
-            );
-        }
-    }
-    catch(erro) {
-        res.status(200).json(
-            { 
-                mensagem: "500"
-            }
-        );
-    }
-}
 
-/**
- * Busca um titular por meio do numero de carteirinha
- * @param {*} req numero da cateirinha
- * @param {*} res json com a mensagem e o resultado
- */
-const buscarCodigoTitular = async (req, res) => {
-    const { carteira } = req.params;
-    try {
-        const resultado = await Beneficiario.pegarNomeUsuario(carteira)
-        if (resultado.rows.length > 0) {
-            res.status(200).json(
-                { 
-                    mensagem:"200",
-                    titular: resultado.rows[0]
-                }
-            );
-        } 
-        else {
-            res.status(200).json(
-                {
-                    mensagem: "404"
-                }
-            );
-            
-        }
-    }
-    catch(erro) {
-        res.status(200).json(
-            { 
-                mensagem: "500"
-            }
-        );
-    }
-}
-
-/**
- * Busca um beneficiário por meio dos digitos passados.
- * @param {*} req são os digitos que podem ser cpf ou o codigo de carteirinha
- * @param {*} res json com a mensagem e o resultado.
- */
-const buscarBeneficiarioDigitos = async (req, res) => { 
+// Por meio dos digitos passado verifica se é um titular com acesso aos boletos
+// Retorna [id, nome] caso encontre.
+const buscarTitularBoletoDigitos = async (req, res) => { 
     const { digitos } = req.params;
     try {
-        const resultado = await Beneficiario.buscarBeneficiarioTitularBoleto(digitos)
+        const resultado = await Beneficiario.buscarTitularBoleto(digitos)
         if (resultado.rows.length > 0) {
             res.status(200).json(
                 { 
                     mensagem:"200",
+                    status:{
+                        sucesso:"✅"
+                    },
                     titular: resultado.rows[0]
                 }
             );
@@ -110,18 +44,21 @@ const buscarBeneficiarioDigitos = async (req, res) => {
     }
 }
 
-/**
- * Busca todos os boletos em aberto de um beneficiario titular
- * @param {*} req codigo do beneficiário titular
- * @param {*} res json com a mensagem e o resultado
- */
+// Por meio do codigo do titular busca os boletos não pagos do mesmo.
 const buscarBoleto = async (req, res) => {
     const { codigoTitular } = req.params;
     try {
-        
         const resultado = await Boleto.buscarBoletosTitular(codigoTitular)
         if (resultado.rows.length > 0) {
-            resposta = { mensagem:'200' }
+            resposta = {
+                mensagem:'200',
+                status:{
+                   data:"🗓️",
+                   money:"💵",
+                   doc:"📄", 
+                   link:"🔗"
+                }
+            }
             for (let i = 0; i < resultado.rows.length; i++) {
                 resposta[`boleto${i + 1}`] = resultado.rows[i]
             }
@@ -139,6 +76,38 @@ const buscarBoleto = async (req, res) => {
             { 
                 mensagem: "500"
             }
+        );
+    }
+}
+
+const buscarTitular = async (req, res) => {
+    const { cpf } = req.params;
+    try {
+        const resultado = await Beneficiario.ehTitularAtivo(cpf)
+        if (resultado.rows.length > 0) {
+            res.status(200).json(
+                { 
+                    mensagem:"200",
+                    status:{
+                        sucesso:"✅"
+                    },
+                    titular: resultado.rows[0]
+                }
+            );
+        } 
+        else {
+            res.status(200).json(
+                {
+                    mensagem: "404",
+                } 
+            );
+        }
+    }
+    catch(erro) {
+        res.status(200).json(
+            { 
+                mensagem: "500",
+            } 
         );
     }
 }
@@ -195,11 +164,12 @@ const pegaLink = async (req, res) => {
 const buscarGuia = async (req, res) => {
     const { numeroGuia } = req.params
     try{
-        const resultado = await banco.pegarStatusGuia(numeroGuia)
+        const resultado = await Guia.pegarDadosGuia(numeroGuia)
         if(resultado.rows.length > 0){
+            
             res.status(200).json({ 
                 mensagem:"200",
-                guia: resultado.rows[1]
+                guia: resultado.rows[0]
              });
         } else{
             res.status(200).json(
@@ -209,6 +179,42 @@ const buscarGuia = async (req, res) => {
             )
         }
     }catch(erro){
+        console.log(erro)
+        res.status(200).json(
+            {
+                mensagem:"500",
+            }
+        )
+        console.error(erro)
+
+    }
+
+}
+
+const listarGuias = async (req, res) => {
+    const { codigoTitular } = req.params
+    try{
+        const resultado = await Guia.listarGuiasBeneficiario(codigoTitular)
+        if(resultado.rows.length > 0){
+            resposta = { 
+                mensagem:'200',
+                status:{
+                    guia:"📋"
+                } 
+            }
+            for (let i = 0; i < resultado.rows.length; i++) {
+                resposta[`guia${i + 1}`] = resultado.rows[i]
+            }
+            res.status(200).json(resposta);
+        } else{
+            res.status(200).json(
+                {
+                    mensagem:"404",
+                }
+            )
+        }
+    }catch(erro){
+        console.log(erro)
         res.status(200).json(
             {
                 mensagem:"500",
@@ -223,9 +229,9 @@ const buscarGuia = async (req, res) => {
 // EXPORTAÇÃO
 module.exports = {
     buscarBoleto,
-    buscarBeneficiarioDigitos, 
+    buscarTitularBoletoDigitos,
+    buscarTitular,
     pegaLink,
     buscarGuia, 
-    buscarCodigoTitular, 
-    buscarUsuarioCpf
+    listarGuias
 }
