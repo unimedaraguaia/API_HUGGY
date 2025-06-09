@@ -1,3 +1,4 @@
+const db = require('oracledb')
 const banco = require('./banco')
 
 class Beneficiario {
@@ -8,20 +9,22 @@ class Beneficiario {
         try{
             conexao = await banco.conectarBanco()
             const resultado = await conexao.execute(
-                `SELECT U.NNUMETTITU, U.CNOMEUSUA
-                 FROM HSSUSUA U
-                 WHERE U.C_CPFUSUA = :cpf
-                 AND U.CSITUUSUA = 'A'
-                 AND U.CTIPOUSUA = 'T'
+                `
+                SELECT U.NNUMETITU, U.CNOMEUSUA, U.NNUMEUSUA
+                FROM HSSUSUA U
+                WHERE U.C_CPFUSUA = :cpf
+                AND U.CSITUUSUA = 'A'
+                AND U.CTIPOUSUA = 'T'
                 `,
                 {cpf},
-                {outFormat:banco.OUT_FORMAT_OBJECT}
+                {outFormat:db.OUT_FORMAT_OBJECT}
             )
+            console.log(resultado.rows)
             return resultado
         }catch(erro){
             throw erro
         }finally{
-            conexao.desconectarBanco()
+            banco.desconectarBanco(conexao)
         }
     }
   
@@ -46,7 +49,7 @@ class Beneficiario {
                 AND T.NNUMELOPG = 82607630
                 `,
                 {cpf},
-                {outFormat:banco.OUT_FORMAT_OBJECT}
+                {outFormat:db.OUT_FORMAT_OBJECT}
             )
             return resultado
         }catch(erro) {
@@ -75,7 +78,7 @@ class Beneficiario {
                 AND T.NNUMELOPG = 82607630
                 `,
                 {carteira},
-                {outFormat:banco.OUT_FORMAT_OBJECT}
+                {outFormat:db.OUT_FORMAT_OBJECT}
             )
             return consulta
         }catch(erro){
