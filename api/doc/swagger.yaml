@@ -7,33 +7,96 @@ info:
    A API realiza verificações específicas, como a confirmação de que o solicitante é um beneficiário titular, dependendo do serviço requisitado. 
    A comunicação ocorre via HTTP, com os dados sendo passados pela URL, e as respostas são retornadas no formato JSON.
    Por questões de segurança, a API não pode ser acessada diretamente ela aceita apenas requisições originadas dos servidores da plataforma Huggy. 
-  version: '1.3.0'
+  version: '0.2.0'
+
 servers:
   - url: http://localhost:3000
     description: Acesso local
 
-paths: 
-  /usuario/{cpf}:
+paths:
+
+  /titularBoleto/{digitos}:
     get:
-      summary: Identifica usuario
-      description: Por meio do CPF identifica o o nome e o id do usuario
+      summary: Identifica um titular ativo que pode ter acesso a boletos online
+      description: Por meio do CPF ou Numero de Carteira se faz a identificação do titular, caso nao seja de um titular nada é retornado
+      operationId: BuscaTitularBoleto
       responses:
         '200':
-          $ref: "#/components/responses/responseUsuario"
+          $ref: "#/components/responses/responseTitularBoleto"
         '404':
           $ref: "#/components/responses/naoEncontrado"
         '500':
           $ref: "#/components/responses/indisponivel"
 
+  /boleto/{codigoTitular}:
+    get:
+      summary: Obtem os boletos de um titular
+      description: Por meio do codigo do titular pega todos os Boletos não pagos de um titular no periodo da data atual até 3 meses antetiores
+      operationId: BuscaBoletos
+      responses: 
+        '200':
+          $ref: "#/components/responses/responseBoleto"
+        '404':
+          $ref: "#/components/responses/naoEncontrado" 
+        '500':
+          $ref: "#/components/responses/indisponivel"
+      
+  /guias/{numeroGuia}:
+    get:
+      summary: Identifica um titular
+      description: Por meio de um número de carteirinha
+      responses:
+        '200':
+          $ref: "#/components/responses/responseGuias"
+        '404':
+          $ref: "#/components/responses/naoEncontrado" 
+        '500':
+          $ref: "#/components/responses/indisponivel" 
+
+  /listarGuias/{codigoTitular}:
+    get:
+      summary: Identifica um titular
+      description: Por meio de um número de carteirinha
+      responses:
+        '200': 
+          $ref: "#/components/responses/responseListaGuias"
+        '404':
+          $ref: "#/components/responses/naoEncontrado" 
+        '500':
+          $ref: "#/components/responses/indisponivel" 
+
 components: 
+
   responses:
-    responseUsuario:
-      description: Detalhes de usuario
+
+    responseTitularBoleto:
+      description: Detalhes do Titular 
       content:
         application/json:
           schema: 
-            $ref: "#/components/schemas/usuario"
+            $ref: "#/components/schemas/titularBoleto"
     
+    responseListaGuias:
+      description: Lista de guias
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/listaGuias"
+    
+    responseGuias: 
+      description: Dados da guia 
+      content:
+        application/json:
+          schema: 
+            $ref: "#/components/schemas/guias"
+
+    responseBoleto: 
+      description: Detalhes dos Boletos
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/boletos"
+
     naoEncontrado:
       description: Não foram encontrado os dados solicitados
       content:
@@ -47,21 +110,87 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Erro_500"
-  
+
   schemas:
 
-    usuario:
+    titularBoleto:
       type: object
       properties:
         mensagem:
           type: string
-          description: codigo de retorno para a API da Huggy
+          description: codigo de retorno para a requisicao Huggy
           example: "200"
         titular:
           type: array
           description: Nome do id e nome do beneficiário
           example: [2350000, 'JOAO PAULO SILVA']
-    
+
+    boletos:
+      type: object
+      properties:
+        mensagem:
+          type: string
+          description: codigo de retorno para a requisicao Huggy
+          example: "200"
+        boleto1:
+          type: object
+          description: dados do boleto
+          example: {
+            "NNUMEPAGA": 123456,
+            "DVENCPAGA": "20/03/2025",
+            "NVENCPAGA": 449.35,
+            "CINSTPAGA": NULL,
+            "CCOMPPAGA": "04/2025",
+            "LINHA_DIGITAVEL": "00000.00000 00000.000000 00000.000000 0 0000000000000",
+            "LOCAL_BOLETO": "http://minhaApI:0000/temp/NF000000B.pdf"
+          }   
+
+    listaGuias:
+      type: object
+      properties:
+        mensagem:
+          type: string
+          description: codigo de retorno de requisicao para a Huggy 
+          example: "200"
+        guia1:
+          type: object
+          description: dados basicos das guias 
+          example: {
+            "ID_GUIA": 5692755,
+            "EMISSAO": "09/04/2025",
+            "TIPO_GUIA": "AMBULATORIAL",
+            "STATUS": "Liberada"
+          }
+
+    guias: 
+      type: object
+      properties:
+        mensagem:
+          type: string
+          description: codigo de retorno de requisicao Huggy
+          example: "200"
+        guia: 
+          type: object
+          description: dados detalhados da guia1 
+          example: {
+            "ID_GUIA": 5692755,
+            "TIPO_GUIA": "AMBULATORIAL",
+            "NOME_PRESTADOR": "MEDBARRA SERVICOS HOSPITALARES LTDA",
+            "EMISSAO": "2025-04-10T01:14:24.000Z",
+            "VALIDADE": "2025-06-08T03:00:00.000Z",
+            "STATUS": "Liberada",
+            "PROCEDIMENTOS": {
+              "PROCEDIMENTO1": {
+                "name": "CONSULTA CLÍNICA",
+                "status": "Liberada"
+              },
+              "PROCEDIMENTO2": {
+                "name": "EXAME DE SANGUE",
+                "status": "Liberado"
+              }
+            }
+          }
+
     Erro_404:
       type: object
       properties:
@@ -77,6 +206,3 @@ components:
           type: string
           description: Serviço indisponível
           example: 500
-    
-    
-  
