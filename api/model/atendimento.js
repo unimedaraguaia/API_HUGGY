@@ -170,6 +170,15 @@ class Atendimento {
         } 
     }
 
+    /**
+     * Esse método fecha um atendimento
+     * @param {*} idAtendimento identificador do atendimento
+     * @returns podendo ser um json com status:
+     * 500 - Erro ao fechar atendimento
+     * 200 - Sucesso ao fechar atendimento
+     * Exception - no caso de uma execeção
+     */
+
     async fechar_atendimento(idAtendimento) {
         // Tenta executar a  procedure
         let conexao
