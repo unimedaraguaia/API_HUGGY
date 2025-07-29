@@ -6,6 +6,7 @@ const path = require('path');
 
 // CONFIGURAÇÕES
 const app  = express()
+app.use(express.json())
 const localService = process.env.ADDRESS_SERVICE
 const porta = process.env.PORT
 
@@ -23,6 +24,7 @@ const porta = process.env.PORT
 //app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument)); // rota de documentação deve ser sempre a primeira
 //app.use(cors());
 app.use(rotas)
+app.use(express.json())
 app.use('/temp', express.static(path.join(__dirname, '../temp')));
 
 
