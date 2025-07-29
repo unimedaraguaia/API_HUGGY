@@ -328,7 +328,11 @@ class Pdf {
         doc.text(`${dados.ESPECIE}`, 71, 187)
         doc.text(`${this.formataNull(dados.QUANTIDADE)}`, 81, 187)
         doc.text(`${this.formatarValor(dados.VALOR)}`, 111, 187)
-        doc.text(`${this.formatarValor(dados.VALOR_NOTA)}`, 141, 187)
+        /**Essa alteração abaixo é devio alguns boletos estarem com o campo nulo de VALOR_NOTA no banco de teste
+         * como não consigo descobri o motivo mudei para o campo VALOR apenas
+         */
+        //doc.text(`${this.formatarValor(dados.VALOR_NOTA)}`, 141, 187)
+        doc.text(`${this.formatarValor(dados.VALOR)}`, 141, 187)
     
         doc.setFont(this.fonte, 'bold')             //define a fonte
         doc.setFontSize(4.5)
