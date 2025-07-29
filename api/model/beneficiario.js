@@ -37,7 +37,7 @@ class Beneficiario {
             conexao = await banco.conectarBanco()
             const resultado = await conexao.execute(
                 `
-                SELECT U.NNUMETITU, U.CNOMEUSUA
+                SELECT U.NNUMETITU, U.CNOMEUSUA, U.NNUMEPESS
                 FROM HSSUSUA U, HSSPLAN P, HSSTITU T
                 WHERE U.C_CPFUSUA = :CPF
                 AND U.CTIPOUSUA = 'T'
@@ -66,7 +66,7 @@ class Beneficiario {
             conexao = await banco.conectarBanco()
             const consulta  = await conexao.execute(
                 `
-                SELECT U.NNUMETITU, U.CNOMEUSUA
+                SELECT U.NNUMETITU, U.CNOMEUSUA, U.NNUMEPESS
                 FROM HSSUSUA U, HSSTITU T, HSSPLAN P
                 WHERE U.CCODIUSUA = :carteira 
                 AND U.CSITUUSUA = 'A'
