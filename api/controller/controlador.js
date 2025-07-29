@@ -4,10 +4,14 @@ const shortLinks = require('../util/encurtador')    // mapeador de links encurta
 const beneficiario = require('../model/beneficiario')
 const boleto = require("../model/boleto")
 const guia = require('../model/guia')
+const protocolo = require('../model/protocolo')
+const atendimento = require('../model/atendimento')
 
 const Beneficiario = new beneficiario.Beneficiario()
 const Boleto = new boleto.Boleto()
 const Guia = new guia.Guia()
+const Protocolo = new protocolo.Protocolo()
+const Atendimento = new atendimento.Atendimento()
 
 
 // Por meio dos digitos passado verifica se é um titular com acesso aos boletos
@@ -71,7 +75,9 @@ const buscarBoleto = async (req, res) => {
                 }
             );
         }
-    }catch(erro){
+    }
+    catch(erro){
+        console.log(erro)
         res.status(200).json(
             { 
                 mensagem: "500"
@@ -112,46 +118,6 @@ const buscarTitular = async (req, res) => {
     }
 }
 
-/**
- * Busca a linha editavel de um boleto
- * @param {*} req identificador do boleto as ser buscada a linha digitavel
- * @param {*} res json com a mensagem e o resultado
- */
-/*const buscarLinhaEditavel = async (req, res) => {
-    const { idBoleto } = req.params;
-    try {
-        const resultado = await banco.linhaPagamento(idBoleto)
-        if (resultado.rows.length > 0) {
-            res.status(200).json({ 
-                mensagem:"200",
-                pagar: resultado.rows[0]
-             });
-        } else {
-            // caso de falha, nome não encontrado
-            res.status(200).json({
-                mensagem: "404",
-                pagar:{
-                    "NNUMETITU":""
-                } 
-            });
-            
-        }
-    }catch(erro){
-        res.status(200).json({ 
-            mensagem: "500", 
-            pagar:{
-                "NNUMETITU":""
-            } 
-        });
-    }
-}*/
-
-/**
- * Redireciona a para o local onde está ao arquivo
- * @param {*} req 
- * @param {*} res 
- * @returns 
- */
 const pegaLink = async (req, res) => {
     const destino = shortLinks.get(req.params.id);
     if (destino) {
@@ -226,6 +192,167 @@ const listarGuias = async (req, res) => {
 
 }
 
+// Protocolos
+const criarProtocolo = async (req, res) => {
+    const {idPessoa} = req.params
+    // Tenta criar protocolo
+    try {
+        const resultado = await Protocolo.criar_protocolo_segunda_via_boleto(idPessoa)
+        if(resultado.status == '200') {
+            // secesso ao criar protocolo
+            res.status(200).json(
+                {
+                    mensagem:'200',
+                    protocolo: {
+                        id:resultado.idProtocolo,
+                        numero:resultado.numeroProtocolo
+                    }
+                }
+            )  
+        }
+        else {
+            console.error('[Protocolo] > cria_protocolo_segunda_via_boleto: (Erro Status diferente de 200)\n');
+            // falha ao criar protocolo
+            res.status(200).json(
+                {
+                    mensagem:'500'
+                }
+            )
+        }
+    }
+    catch(erro){
+        // Erro ao inicar o processo
+        console.error('[Protocolo] > cria_protocolo_segunda_via_boleto: (Erro ao criar Protocolo)\n', erro);
+        res.status(200).json(
+            {
+                mensagem:'500'
+            }
+        )
+    }
+}
+
+// Atendimento
+const adicionaAtendimento = async (req, res) => {
+    
+    //console.log('Tipo de req.body:', typeof req.body);
+    //console.log('req.body:', req.body);
+
+    const {idProtocolo} = req.params
+    const {idPessoa} = req.body
+    const {tipoAtendimento} = req.body
+    
+    try{
+        const resultado = await Atendimento.criar_atendimento_segunda_via_boleto(idProtocolo, idPessoa, tipoAtendimento)
+        if(resultado.status == '200' && resultado.idAtendimento > 0) {
+            console.error('[Atendimento] > cria_atendimento_segunda_via_boleto: (Sucesso atendiento criado)\n');
+            res.status(200).json(resultado)
+        }
+        else {
+            resposta = {
+                id_atendimento: resultado.idAtendimento,
+                status: {
+                    atendimento: "nao criado"
+                }
+            }
+            res.status(200).json(resposta)
+        }
+    }
+    catch(erro) {
+        console.log(erro)
+        res.status(500).json(
+            {   
+                status: 500,
+                mensagem: 'Erro ao adicionar atendimento'
+            }
+        )
+    }
+}
+
+// mensagem
+const adicionaMensagem = async (req, res) => {
+
+    const {idAtendimento} = req.params
+    const mensagem = req.body.mensagem;
+
+    try {
+
+        const operacao = await Atendimento.adiciona_mensagem_boletos(idAtendimento, mensagem)
+
+        if(operacao.status == "200") {
+
+            resposta = {
+                status: "200",
+                mensage: `Mensagem adicionada ao atendimento ${(idAtendimento)}`
+            }
+
+            res.status(200).json(resposta)
+
+        }
+        else {
+
+            console.log('[Atendimento] > adiciona_mensagem_boletos: (Status diferente de 200)\n')
+
+            res.status(500).json(
+                {
+                    status: "500",
+                    mensage: `Falha ao adicionar mensagem no atendimento ${(idAtendimento)}`
+                }
+            )
+        }
+    }
+    catch(erro) {
+
+        console.log('[Atendimento] > adiciona_mensagem_boletos: (Excessão lançada)\n')
+        res.status(500).json(
+            {
+                status: "500",
+                mensage: `Falha ao adicionar mensagem no atendimento ${(idAtendimento)}`
+            }
+        )
+    }
+}
+
+const fecharAtendimento = async (req, res) => {
+
+    const {idAtendimento} = req.params
+
+    try {
+
+        const operacao = await Atendimento.fechar_atendimento(idAtendimento)
+
+        if(operacao.status == "200") {
+
+            resposta = {
+                status: "200",
+                mensage: `Atendimento Fechado ${(idAtendimento)}`
+            }
+
+            res.status(200).json(resposta)
+
+        }
+        else {
+
+            console.log('[Atendimento] > fechar_atendimento: (Status diferente de 200)\n')
+
+            res.status(500).json(
+                {
+                    status: "500",
+                    mensage: operacao.mensagem
+                }
+            )
+        }
+    }
+    catch(erro) {
+
+        console.log(`[Atendimento] fechar_atendimento: (Excessão lançada)\n${erro}`)
+        res.status(500).json(
+            {
+                status: "500",
+                mensage: `Falha ao fechar atendimento ${(idAtendimento)}`
+            }
+        )
+    }
+}
 // EXPORTAÇÃO
 module.exports = {
     buscarBoleto,
@@ -233,5 +360,9 @@ module.exports = {
     buscarTitular,
     pegaLink,
     buscarGuia, 
-    listarGuias
+    listarGuias, 
+    criarProtocolo,
+    adicionaAtendimento,
+    adicionaMensagem,
+    fecharAtendimento
 }
