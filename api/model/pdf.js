@@ -2,20 +2,31 @@ const { jsPDF } = require("jspdf")
 const fs = require("fs")
 const path = require('path');
 
+/**
+ * Classe PDF: Utilizada para produzir os boleto em formato PDF 
+ */
 class Pdf {
-    // COnstrutor
-    constructor(dados){
-        this.doc = new jsPDF({
-            orientation: 'portrait',
-            unit: 'mm',
-            format: 'a4'
-        })
+
+    /**
+     * Metodo construtor dos PDF
+     * @param {*} dados informações necessárias para a criação do PDF (boleto)
+     */
+    constructor(dados) {
+        // cria um objeto JSPDF
+        this.doc = new jsPDF(
+            {
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            }
+        )
         // Posições iniciais para desenho do código de barras
         this.posX = 10
         this.posY = 268
+        // Define o nome do documento e a fonte a ser utilizada
         this.fileName = dados.NUMERO_DOCUMENTO
         this.fonte = 'helvetica'
-        // Desenha o boleto e adicioan informações
+        // Desenha o boleto e adiciona informações
         this.desenhaGrade(this.doc)
         this.instrucoes(this.doc)
         this.nomeCampos(this.doc)
@@ -23,48 +34,86 @@ class Pdf {
         this.addInfo(this.doc, dados)
         this.gerarCodigoBarra(this.doc, dados.CODIGO_BARRAS)
     }
-    // configura a fonte  
+
+    /**
+     * Metodo de configuração de fonte 
+     * @param {*} doc Objeto onde as fotes serão mudadas
+     * @param {*} fonte Qual a fonte a ser usada
+     * @param {*} tamanho Qual o tamanho da fonte
+     * @param {*} estilo Qual o estilo de fonte
+     */
     fonteConfig(doc, fonte, tamanho, estilo){
-        doc.setFont(this.fonte)              //define a fonte
-        doc.setFontSize(tamanho)        //define o tamanho da fonte
-        doc.setFont(undefined, estilo)  //define o estilo com negrito
+        // define a fonte, o tamanho e estilo.
+        doc.setFont(this.fonte)              
+        doc.setFontSize(tamanho)        
+        doc.setFont(undefined, estilo)  
     }
-    // formata os cpf e o anonimiza
+
+    /**
+     * Metodo que transforma um pdf em string e o anonimiza
+     * @param {*} cpf numero do CPF passado
+     * @param {*} anonimizaValores flag de anonimização
+     * @returns pode retornar um cpf anonimo ou nao (depende da flag)
+     */
     formataCPF(cpf, anonimizaValores = true) {
+        
         cpf = String(cpf);
-      
+        
         if (cpf.length === 11) {
+          
           if (anonimizaValores) {
-            cpf = `${cpf.substring(0, 3)}.XXX.XXX-XX`;
-          } else {
+            cpf = `${cpf.substring(0, 3)}.XXX.XXX-XX`
+          } 
+          else {
             cpf = `${cpf.substring(0, 3)}.${cpf.substring(3, 6)}.${cpf.substring(6, 9)}-${cpf.substring(9, 11)}`;
           }
         }
-      
+
         return cpf;
     }
-    // formata os valores
+
+    /**
+     * Método para formatar valores para o padrão brasileiro
+     * @param {*} valor valor que vem do banco de dados no padrão americano
+     * @returns valor formatado no padrão PT_BR
+     */
     formatarValor(valor) {
         return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
-    // formada dados nulos
-    formataNull(info){
-        if(info == null){
+
+    /**
+     * Metodo utilizado para colocar strin vazia em campos nulos
+     * @param {*} info Recebe uma informação que pode ser nula
+     * @returns Uma string vazia ou a prórpia informação
+     */
+    formataNull(info) {
+
+        if(info == null) {
             return ""
-        }else{
+        }
+        else {
             return info
         }
     }
-    // formata a data
+
+    /**
+     * Pega um data passada em formato ISO e formata para padrão dd/mm/aaaa
+     * @param {*} dataISO data em formato iso
+     * @returns data no padrão dd/mm/aaaa
+     */
     formatarData(dataISO) {
         const data = new Date(dataISO);
         const dia = String(data.getDate()).padStart(2, '0');
-        const mes = String(data.getMonth() + 1).padStart(2, '0'); // mês começa em 0
+        const mes = String(data.getMonth() + 1).padStart(2, '0');
         const ano = data.getFullYear();
         return `${dia}/${mes}/${ano}`;
     }
-    // desenha o layout do PDF
-    desenhaGrade(doc){
+
+    /**
+     * Metodo que desenha toda da grade do documento (boleto), linhas celulas e etc
+     * @param {*} doc objeto que será salvo como pdf
+     */
+    desenhaGrade(doc) {
         doc.setFillColor(200);
         //linha 1
         doc.rect(55, 53, 0.5, 6, 'F')
@@ -158,7 +207,11 @@ class Pdf {
         // linha final
         doc.rect(10, 267, 190, 0.2, 'F')
     }
-    // carrega os nome dos campos
+
+    /**
+     * Preenche no documento todo os nomes dos campos 
+     * @param {*} doc Objeto que representa o documento
+     */
     nomeCampos(doc) {
         this.fonteConfig(doc, this.fonte, 6, 'normal')
         doc.text('Beneficiário', 11, 64);
@@ -223,8 +276,13 @@ class Pdf {
     
         doc.text("Autenticação mecânica - Ficha de Compensação", 158, 269)
     }
-    // carrega instruções
-    instrucoes(doc){
+
+    /**
+     * Metodo que carrega as instruções do documento
+     * @param {*} doc Objerto que representa o documento
+     */
+    instrucoes(doc) {
+
         const linha = '-'.repeat(260);
         //Cabeçalho 
         this.fonteConfig(doc, this.fonte, 10, 'bold')
@@ -248,37 +306,46 @@ class Pdf {
         doc.text('Corte na linha pontilhada', 10, 120);
         doc.text(linha, 10, 124);
     
-    
         this.fonteConfig(doc, this.fonte, 6, 'bold')
         doc.text('Instruções (Texto de responsabilidade do cedente)', 11, 192)
-    
         
     }
-    // carrega a logo (Problema)
-    carregaLogo(doc){
+    
+    /**
+     * Metodo que carrega a log do Sicredi e da ANS
+     * @param {*} doc Objeto que representa o documento
+     */
+    carregaLogo(doc) {
+        // obtem as logos
         let logoBanco = path.join(__dirname, '../img/sicredi.jpg')
         let logoANS = path.join(__dirname,'../img/Registro ANS.png')
-    
+        // codifica me base 64
         const logoBanco64 = fs.readFileSync(logoBanco, { encoding: 'base64' })
         const logoANS64 = fs.readFileSync(logoANS, { encoding: 'base64' })
-    
+        // carrreg nas variveis
         const banco = `data:image/png;base64,${logoBanco64}`
         const ANS = `data:image/png;base64,${logoANS64}`
-        
+        // define o tamanho
         let larguraImagem = 30
         let alturaImagem = 10
-    
+        //adiciona no documento
         if (banco && larguraImagem && alturaImagem) {
             doc.addImage(banco, 'JPG', 10, 49, larguraImagem, alturaImagem)
             doc.addImage(banco, 'JPG', 10, 142, larguraImagem, alturaImagem)
         }
-    
+        // adiciona no documento 
         if(ANS){
             doc.addImage(ANS, 'PNG', 176, 89, 20, 6)
             doc.addImage(ANS, 'PNG', 115, 228, 20, 6)
         }
     }
-    addInfo(doc, dados){
+
+    /**
+     * Metodo que preenche o documento com as informaçõe encontradas
+     * @param {*} doc Objeto que representa o documento
+     * @param {*} dados informações obtidas do banco com relação ao documento
+     */
+    addInfo(doc, dados) {
         
         doc.setFont(this.fonte, 'bold')             //define a fonte
         doc.setFontSize(12)
@@ -352,11 +419,17 @@ class Pdf {
         doc.text(`${dados.ENDERECO1}`, 11, 250)
         doc.text(`${dados.ENDERECO2}`, 11, 254)
     
-        //doc.text(`CPF${boleto[0].CNPJ_CPF_SACADO}`)
         doc.text(`CPF: ${this.formataCPF(dados.CNPJ_CPF_SACADO)}`, 165, 246)
         doc.text(`Contrato: ${dados.CONTRATO}`,165, 250 )
     }
-    // carrega codigo de barra
+
+    /**
+     * Metodo utilizado para desenhar código de barra no documento
+     * @param {*} doc Objeto que representa o documento
+     * @param {*} largura largura do codigo
+     * @param {*} altura altura do codigo
+     * @param {*} preenchido flag de preenchimento 
+     */
     desenharBarra(doc, largura, altura, preenchido) {
         try{
 
@@ -375,7 +448,13 @@ class Pdf {
             console.log("Erro ao desenhar Barras:", erro)
         }
     }
-    // cria o codigo de barra
+
+    /**
+     * Gera o codigo de barras de acordo com o valor passado
+     * @param {*} doc Objeto que presenta o documento
+     * @param {*} valor Valor a ser representado no codigo de barras
+     * @returns retona o codigo de barras
+     */
     gerarCodigoBarra(doc, valor) {
         
         let codigo = '';
@@ -435,12 +514,21 @@ class Pdf {
       
         return codigo;
     }
-    // Salva o arquivo em pdf
+
+    
+    /**
+     * Metodo que salva o boleto em PDF com o nome do boleto
+     * @param {*} path caminho onde o documento deve ser salvo
+     */
     salve(path){
         this.doc.save(`${path}${this.fileName.replace(/\s+/g, "")}.pdf`)
     }
 }
-// exporta o objeto
+
+/**
+ * Exporta o objeto
+ */
+
 module.exports = {
     Pdf
 }
