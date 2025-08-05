@@ -38,7 +38,7 @@ class Protocolo {
                 END;
                 `,
                 {   
-                    idPessoa,
+                    idPessoa:Number(idPessoa),
                     p_id_protocolo:  { dir: db.BIND_OUT, type: db.NUMBER },
                     p_msg_retorno:   { dir: db.BIND_OUT, type: db.STRING, maxSize: 4000 }
                 }
