@@ -1,12 +1,24 @@
 const db = require('oracledb')
 const banco = require('./banco')
 
+/**
+ * +-----------------------------------------------------------------+
+ * |  Classe Utilizada para obter dados a respeito do beneficiários  |
+ * +-----------------------------------------------------------------+
+ */
 class Beneficiario {
     
-    // verifica se o cpf passado pertence a um titular ativo
+    /**
+     * Metodo que verifica se o cpf passado é de um titular simples
+     * @param {*} cpf digitos numerico de um cpf
+     * @returns 
+     */
     async ehTitularAtivo(cpf){
+
         let conexao
-        try{
+        // Tenta conectar com banco de dados, executar a operação e retornar resultado 
+        try {
+
             conexao = await banco.conectarBanco()
             const resultado = await conexao.execute(
                 `
@@ -19,25 +31,38 @@ class Beneficiario {
                 {cpf},
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
-            console.log(resultado.rows)
+            console.log(`[É titular] Sucesso beneficiário é titular\n`)
             return resultado
-        }catch(erro){
+
+        }
+        catch(erro) {
+            // Exibe a mensagem e lança a exception
+            console.log(`[É titular] Falha ao verificar titularidade\n`)
             throw erro
-        }finally{
+        }
+        finally {
+            // fecha a conexão com o banco de dados
             banco.desconectarBanco(conexao)
         }
     }
   
     // FUNÇÕES PARA FINS DE 2º VIA DE BOLETOS
 
-    // Verifica se o cpf passado é de um titular ativo que pode obter o boleto online
-    async buscarTitularBoletoCpf(cpf){
+    /**
+     * Método que verifica se o beneficiário é titular ativo e que pode obter boletos online
+     * @param {*} cpf Numero de cpf do beneficiário
+     * @returns Json contendo as informações ou lança uma exception
+     */
+    async buscarTitularBoletoCpf(cpf) {
+        
         let conexao 
+        // Tenta estabelecer conexão com banco. pegar o dados pelo cpf e retornar o resultado
         try {
+            
             conexao = await banco.conectarBanco()
             const resultado = await conexao.execute(
                 `
-                SELECT U.NNUMETITU, U.CNOMEUSUA, U.NNUMEPESS
+                SELECT U.NNUMETITU, U.CNOMEUSUA, U.NNUMEUSUA, U.NNUMEPESS
                 FROM HSSUSUA U, HSSPLAN P, HSSTITU T
                 WHERE U.C_CPFUSUA = :CPF
                 AND U.CTIPOUSUA = 'T'
@@ -51,22 +76,36 @@ class Beneficiario {
                 {cpf},
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
+            console.log(`[Buscar Titular CPF] Sucesso ao buscar Titular\n`)
             return resultado
-        }catch(erro) {
+
+        }
+        catch(erro) {
+            // Exibe mensagem de log e lança a exception
+            console.log(`[Buscar Titular CPF] Erro ao buscar titular pelo cpf (Erro)\n\n${erro}`)
             throw erro
-        }finally {
+        }
+        finally {
+            // Fecha conexão com banco
             banco.desconectarBanco(conexao)
         }
     }
 
-    // verifica se o numero de carteirinha passado é um de um titular ativo que pode ter obter boleto online
-    async buscarTitularBoletoCarteira(carteira){
+    /**
+     * Busca o titular de boleto pelo numero de carteirinha
+     * @param {*} carteira numero da carteirinha unimed
+     * @returns 
+     */
+    async buscarTitularBoletoCarteira(carteira) {
+
         let conexao
-        try{
+        // tenta conectar com o banco de dados, fazer a consulta e retornar resultado
+        try {
+
             conexao = await banco.conectarBanco()
             const consulta  = await conexao.execute(
                 `
-                SELECT U.NNUMETITU, U.CNOMEUSUA, U.NNUMEPESS
+                SELECT U.NNUMETITU, U.CNOMEUSUA, U.NNUMEUSUA, U.NNUMEPESS
                 FROM HSSUSUA U, HSSTITU T, HSSPLAN P
                 WHERE U.CCODIUSUA = :carteira 
                 AND U.CSITUUSUA = 'A'
@@ -80,32 +119,50 @@ class Beneficiario {
                 {carteira},
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
+            console.log(`[Buscar Titular Carteira] Sucesso ao bucar Titular\n`)
             return consulta
-        }catch(erro){
+
+        }
+        catch(erro) {
+            // Exibe mensagem e lança a exception
+            console.log(`[Buscar Titular Carteira] Erro ao buscar titular pela carteira\n`)
             throw erro
-        }finally{
+        }
+        finally {
+            // Fecha a conexão com banco
             banco.desconectarBanco(conexao)
         }
     }
 
-    // verifica se os digitos passados é um cpf ou uma carteirinha de um titular que pode obter o boleto online
-    async buscarTitularBoleto(digitos){
+    /**
+     * Método verifica se os digitos passados são de CPF ou de carteira Unimed
+     * @param {*} digitos sequencia de numeros
+     * @returns Os dados da consulta ou lança uma exception
+     */
+    async buscarTitularBoleto(digitos) {
+
         try {
+            // Se os digitos tem 11 caracteres é possível cpf
             if(digitos.length == 11) {
+                // tenta buscar pelo cpf e retorna o resultado
                 const consulta = await this.buscarTitularBoletoCpf(digitos) 
                 return consulta
-            }
+            }// se caso for 16 digitos é possível carteira
             else if(digitos.length == 16) {
+                // tenta buscar pela carteira e retona o resultado
                 const consulta = await this.buscarTitularBoletoCarteira(digitos)
                 return consulta
             }
         }
         catch(erro) {
+            // Exibe a mensagem e lança a exception
+            console.log(`[Buscar Titular Boleto] Lançamento de Excessão\n${erro}`)
             throw erro
         }
     }
+    
 }
-
+// Exporta o modulo
 module.exports = {
     Beneficiario
 }
