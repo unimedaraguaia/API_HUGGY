@@ -1,6 +1,6 @@
 openapi: '3.0.3'
 info:
-  title: API_UNIMED Huggy
+  title: API_UNIMED HUGGY
   description: |
    A API_UNIMED foi desenvolvida para fornecer serviços de consulta de dados utilizados em automações integradas à plataforma Huggy.
    Seu uso é exclusivo para aplicações internas, atuando como suporte ao sistema de envio de mensagens automatizadas.
@@ -8,6 +8,10 @@ info:
    A comunicação ocorre via HTTP, com os dados sendo passados pela URL, e as respostas são retornadas no formato JSON.
    Por questões de segurança, a API não pode ser acessada diretamente ela aceita apenas requisições originadas dos servidores da plataforma Huggy. 
   version: '0.2.0'
+  termsOfService: http://www.apache.org/licenses/LICENSE-2.0.txt
+  license:
+    name: Apache License - Version 2.0, January 2004
+    url: http://www.apache.org/licenses/LICENSE-2.0
 
 servers:
   - url: http://localhost:3000
@@ -15,11 +19,21 @@ servers:
 
 paths:
 
-  /titularBoleto/{digitos}:
+  /titularBoleto:
     get:
+      tags:
+        - Beneficiário
       summary: Identifica um titular ativo que pode ter acesso a boletos online
       description: Por meio do CPF ou Numero de Carteira se faz a identificação do titular, caso nao seja de um titular nada é retornado
       operationId: BuscaTitularBoleto
+      parameters:
+        - name: digitos
+          required: true
+          in: header
+          schema:
+            description: Pode ser cpf ou carteira
+            type: integer
+            example: 23523523535
       responses:
         '200':
           $ref: "#/components/responses/responseTitularBoleto"
@@ -28,8 +42,10 @@ paths:
         '500':
           $ref: "#/components/responses/indisponivel"
 
-  /boleto/{codigoTitular}:
+  /boleto:
     get:
+      tags:
+        - Boletos
       summary: Obtem os boletos de um titular
       description: Por meio do codigo do titular pega todos os Boletos não pagos de um titular no periodo da data atual até 3 meses antetiores
       operationId: BuscaBoletos
@@ -41,8 +57,10 @@ paths:
         '500':
           $ref: "#/components/responses/indisponivel"
       
-  /guias/{numeroGuia}:
+  /guias:
     get:
+      tags:
+        - Guias
       summary: Identifica um titular
       description: Por meio de um número de carteirinha
       responses:
@@ -53,8 +71,10 @@ paths:
         '500':
           $ref: "#/components/responses/indisponivel" 
 
-  /listarGuias/{codigoTitular}:
+  /listarGuias:
     get:
+      tags:
+        - Guias
       summary: Identifica um titular
       description: Por meio de um número de carteirinha
       responses:
@@ -65,17 +85,180 @@ paths:
         '500':
           $ref: "#/components/responses/indisponivel" 
 
+  /gerarProtocolo:
+    post:
+      tags:
+        - Protocolo
+      summary: Gera um protocolo no CRM para registrar a solicitação do beneficiário
+      description: Por meio do identificado do beneficiário a requisição gera um protocolo no CRM
+      operationId: criar_protocolo_segunda_via_boleto
+
+      parameters:
+        - name: id_pessoa
+          required: true
+          in: header
+          schema: 
+            description: Identificador de pessoa do Titular
+            type: number
+            example: 235000
+      responses:
+        '200':
+          $ref: "#/components/responses/responseProtocolo"
+        '404':
+          $ref: "#/components/responses/naoEncontrado"
+        '500':
+          $ref: "#/components/responses/indisponivel"
+       
+  /adicionarAtendimento:
+    post:
+      tags:
+        - Atendimento
+      summary: Gera um atendimento no CRM e vincula ele a um protocolo 
+      description: Por meio do intentificador de um protocolo, um tipo de atendimento e o id de um usuario cria um atendimento no CRM
+      operationId: criar_atendimento_segunda_via_boleto
+
+      parameters:
+        - name: id_protocolo
+          required: true
+          in: header
+          schema:
+            description: Identificador de um protocolo
+            type: number
+            example: 50000
+        - name: tipo_atendimento
+          required: true
+          in: header
+          schema:
+            description: Identificador do tipo de atendimento (ramo da arvore ao qual pertence)
+            type: number
+            example: 80
+        - name: id_usuario
+          required: true
+          in: header
+          schema:
+            description: Identificador do usuario (titular)
+            type: number
+            example: 1100000
+        
+      responses:
+        '200':
+          $ref: "#/components/responses/responseAtendimento"
+        '404':
+          $ref: "#/components/responses/naoEncontrado"
+        '500':
+          $ref: "#/components/responses/indisponivel"
+  
+  /insereMensagemAtendimento:
+    post: 
+      tags:
+        - Atendimento
+      summary: Insere uma mensagem em um atendimento criado 
+      description: Por meio do indentificador de um atendimento insere uma mensagem no mesmo.
+      operationId: adiciona_mensagem_boletos
+
+      parameters:
+        - name: id_atendimento
+          required: true
+          in: header
+          schema:
+            description: Identificador de um atendimento
+            type: number
+            example: 50000
+        - name: mensagem
+          required: true
+          in: header
+          schema:
+            description: Mensagem a ser adicionada
+            type: string
+            example: "Boleto gerado para beneficiario"
+                 
+      responses:
+        '200':
+          $ref: "#/components/responses/responseMensagemAtendimento"
+        '404':
+          $ref: "#/components/responses/naoEncontrado"
+        '500':
+          $ref: "#/components/responses/indisponivel"
+
+  /fecharAtendimento: 
+    post: 
+      tags:
+        - Atendimento
+      summary: Fecha um atendimento
+      description: Por meio de um indentificador de atendimento executa o prodecimento de fechamento e verificação de fechamento
+      responses:
+        '200':
+          $ref: "#/components/responses/responseFecharAtendimento"
+        '404':
+          $ref: "#/components/responses/naoEncontrado"
+        '500':
+          $ref: "#/components/responses/indisponivel"
+
 components: 
 
   responses:
-
+    # response beneficiario
     responseTitularBoleto:
-      description: Detalhes do Titular 
+      description: Detalhes do Titular do Boleto 
       content:
         application/json:
           schema: 
             $ref: "#/components/schemas/titularBoleto"
+
+    # response boleto
+    responseBoleto: 
+      description: Detalhes dos Boletos
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/boletos"
+
+    # response padrão de erro
+    naoEncontrado:
+      description: Não foram encontrado os dados solicitados
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Erro404"
     
+    indisponivel:
+      description: Serviços está indisponivel
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Erro500"
+
+    # response protocolo
+    responseProtocolo:
+      description:  Dados Protocolo
+      content:
+        application/json:
+          schema: 
+            $ref: "#/components/schemas/Protocolo"
+
+    # response atendimento
+    responseAtendimento:
+      description: Dados Atendimento
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Atendimento"
+    
+    responseMensagemAtendimento:
+      description: Dados da Mensagem adicionada no atendimento
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/InsereMensagemAtendimento"
+
+    responseFecharAtendimento:
+      description: Dados da Mensagem adicionada no atendimento
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/FecharAtendimento"
+
+    # response guias
     responseListaGuias:
       description: Lista de guias
       content:
@@ -90,29 +273,8 @@ components:
           schema: 
             $ref: "#/components/schemas/guias"
 
-    responseBoleto: 
-      description: Detalhes dos Boletos
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/boletos"
-
-    naoEncontrado:
-      description: Não foram encontrado os dados solicitados
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Erro_404"
-    
-    indisponivel:
-      description: Serviços está indisponivel
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Erro_500"
-
   schemas:
-
+    # schema beneficiario
     titularBoleto:
       type: object
       properties:
@@ -121,10 +283,16 @@ components:
           description: codigo de retorno para a requisicao Huggy
           example: "200"
         titular:
-          type: array
-          description: Nome do id e nome do beneficiário
-          example: [2350000, 'JOAO PAULO SILVA']
+          type: object
+          description: numero do titular, nome do titular, numero usuário, numero pessoa
+          example: {
+            "numero_titular": 235000000,
+            "nome": "MARIA APARECIDA",
+            "numero_usua": 1000000,
+            "id_pessoa": 10000
+          }
 
+    # schema boleto
     boletos:
       type: object
       properties:
@@ -144,7 +312,70 @@ components:
             "LINHA_DIGITAVEL": "00000.00000 00000.000000 00000.000000 0 0000000000000",
             "LOCAL_BOLETO": "http://minhaApI:0000/temp/NF000000B.pdf"
           }   
+    
+    # schema protocolo
+    Protocolo:
+      type: object
+      properties:
+        mensagem:
+            type: string
+            description: codigo de retorno para a requisicao Huggy
+            example: "200"
+        protocolo: 
+          type: object
+          description: dados do protocolo  
+          properties:
+              id: 
+                type: number
+                description: Identificador do Protocolo
+                example: 10000
+              numero:
+                type: number
+                description: Numero do Protocolo
+                example: 300010000200003000
 
+    # schemas atendimento
+    Atendimento:
+      type: object
+      properties:
+        mensagem:
+          type: string
+          description: codigo de retorno para a resquisição Huggy
+          example: "200"
+        Atendimento:
+          type: object
+          description: dados do Atendimento
+          properties:
+            id: 
+              type: number
+              description: Identicador do Atendimento
+              example: 50000
+    
+    InsereMensagemAtendimento:
+      type: object
+      properties:
+        mensagem:
+          type: string
+          description: codigo de retorno para a requisição Huggy
+          example: "200"
+        info: 
+          type: string
+          description: mensagem a ser adicionada no atendimento
+          example: "Mensagem adicionada ao atendimento 50595"  
+
+    FecharAtendimento:
+      type: object
+      properties:
+        mensagem:
+          type: string
+          description: codigo de retorno para a requisição Huggy
+          example: "200"
+        info: 
+          type: string
+          description: mensagem a ser adicionada no atendimento
+          example: "Atendimento Fechado 505950"      
+    
+    # schema guias
     listaGuias:
       type: object
       properties:
@@ -191,18 +422,20 @@ components:
             }
           }
 
-    Erro_404:
+    # schema Mensagem Padrão
+    Erro404:
       type: object
       properties:
         mensagem:
           type: string
           description: Não encontrado
           example: 404
-    
-    Erro_500:
+          
+    Erro500:
       type: object
       properties:
         mensagem:
           type: string
           description: Serviço indisponível
           example: 500
+    
