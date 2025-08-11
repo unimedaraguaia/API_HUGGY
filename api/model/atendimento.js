@@ -55,9 +55,7 @@ class Atendimento {
             catch(erro) {
                 // capture o erro obtido em caso de falha do commit e tentar dar um desfazer no banco
                 console.log(
-                    `[Atendimento] 
-                    > cria_atendimento_segunda_via_boleto
-                    (Erro ao commitar procedure)\n`, erro
+                    `[Atendimento] > cria_atendimento_segunda_via_boleto(Erro ao commitar procedure)`, erro
                 )
                 conexao.rollback()
             }
@@ -74,9 +72,7 @@ class Atendimento {
             else {
                 // retorna o json  com status de falha
                 console.log(
-                    `[Atendimento] 
-                    > cria_atendimento_segunda_via_boleto: 
-                    (Erro id < 0, atendimento nao criado)\n
+                    `[Atendimento] > cria_atendimento_segunda_via_boleto: (Erro id < 0, atendimento nao criado)
                     ${resultado.outBinds.p_id_atendimento, resultado.outBinds.p_msg_retorno}`
                 )
                 return {
@@ -87,9 +83,7 @@ class Atendimento {
         catch (erro) {
             //lança exceção
             console.log(
-                `[Atendimento] 
-                > cria_atendimento_segunda_via_boleto: 
-                (Excessão lançada)\n`
+                `[Atendimento] > cria_atendimento_segunda_via_boleto: (Excessão lançada)`
             )
             throw erro
         }
@@ -153,9 +147,7 @@ class Atendimento {
             catch (erro) {
                 // Captura o erro obtido em caso de falha do commit e tenta dar um desfazer no banco
                 console.log(
-                    `[Atendimento] 
-                    > adiciona_mensagem_boletos: 
-                    (Erro ao commitar procedure)\n${erro}`
+                    `[Atendimento] > adiciona_mensagem_boletos: (Erro ao commitar procedure)\n${erro}`
                 )
                 conexao.rollback()
                 return {
@@ -166,9 +158,7 @@ class Atendimento {
            if(resultado.outBinds.pMensagemRetorno == null || resultado.outBinds.pMensagemRetorno == '') {
              // se nenhum erro foi capturado retorna mensagem de sucesso
                 console.log(
-                    `[Atendimento] 
-                    > adiciona_mensagem_boletos: 
-                    (Sucesso)\n`
+                    `[Atendimento] > adiciona_mensagem_boletos: (Sucesso)`
                 )
                 return {
                     status:"200"
@@ -176,9 +166,7 @@ class Atendimento {
            }
            else {
                 console.log(
-                    `[Atendimento] 
-                    > adiciona_mensagem_boletos: 
-                    (Erro ao adiciona mensagem)\n
+                    `[Atendimento] > adiciona_mensagem_boletos: (Erro ao adiciona mensagem)
                     ${resultado.outBinds.pMensagemRetorno}`
                 )
                 return {
@@ -189,9 +177,7 @@ class Atendimento {
         catch(erro) {
             // lança uma excessão
             console.log(
-                `[Atendimento] 
-                > adiciona_mensagem_boletos: 
-                (Excessão lançada)\n${erro}`
+                `[Atendimento] > adiciona_mensagem_boletos: (Excessão lançada)\n${erro}`
             )
             throw erro
         }
@@ -239,9 +225,7 @@ class Atendimento {
             catch (erro) {
                 // Captura o erro obtido em caso de falha do commit e tenta dar um desfazer no banco
                 console.log(
-                    `[Atendimento] 
-                    > fecha_atendimento: 
-                    (Erro ao commitar procedure)\n\n${erro}`
+                    `[Atendimento] > fecha_atendimento: (Erro ao commitar procedure)\n${erro}`
                 )
                 conexao.rollback()
                 return {
@@ -254,9 +238,7 @@ class Atendimento {
                 // se fechado retorno o j
                 if(operacao == true) {
                     console.error(
-                        `[Atendimento] 
-                        > fecha_atendimento: 
-                        (Sucesso)\n`
+                        `[Atendimento] > fecha_atendimento: (Sucesso)\n`
                     )
                     return {
                         status: "200",
@@ -264,9 +246,7 @@ class Atendimento {
                     }
                 }else{
                     console.log(
-                        `[Atendimento] 
-                        > fecha_atendimento: 
-                        (Erro: atendimento nao fechado)\n`
+                        `[Atendimento] > fecha_atendimento: (Erro: atendimento nao fechado)\n`
                     )
                     return {
                         status: "500",
@@ -276,18 +256,14 @@ class Atendimento {
             }
             catch(erro) {
                 console.log(
-                    `[Atendimento] 
-                    > fechar_atendimento 
-                    (Erro ao verificar fechamento)\n`
+                    `[Atendimento] > fechar_atendimento (Erro ao verificar fechamento)\n`
                 )
                 throw erro
             } 
         }
         catch(erro) {
             console.log(
-                `[Atendimento] 
-                > fechar_atendimento 
-                (Erro ao tentar fecahr atendimento)\n`
+                `[Atendimento] > fechar_atendimento (Erro ao tentar fecahr atendimento)\n`
             )
             throw erro
         }
@@ -333,8 +309,6 @@ class Atendimento {
     }
 }
    
-
-
 module.exports = {
     Atendimento
 }
