@@ -1,21 +1,4 @@
-openapi: '3.0.3'
-info:
-  title: API_UNIMED HUGGY
-  description: |
-   A API_UNIMED foi desenvolvida para fornecer serviços de consulta de dados utilizados em automações integradas à plataforma Huggy.
-   Seu uso é exclusivo para aplicações internas, atuando como suporte ao sistema de envio de mensagens automatizadas.
-   A API realiza verificações específicas, como a confirmação de que o solicitante é um beneficiário titular, dependendo do serviço requisitado. 
-   A comunicação ocorre via HTTP, com os dados sendo passados pela URL, e as respostas são retornadas no formato JSON.
-   Por questões de segurança, a API não pode ser acessada diretamente ela aceita apenas requisições originadas dos servidores da plataforma Huggy. 
-  version: '0.2.0'
-  termsOfService: http://www.apache.org/licenses/LICENSE-2.0.txt
-  license:
-    name: Apache License - Version 2.0, January 2004
-    url: http://www.apache.org/licenses/LICENSE-2.0
 
-servers:
-  - url: http://localhost:3000
-    description: Acesso local
 
 paths:
 
