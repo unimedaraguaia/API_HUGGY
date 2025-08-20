@@ -1,37 +1,56 @@
-// IMPORTAÇÕES
+// ========================= IMPORTAÇÕES ============================= //
 require('dotenv').config()
 const express = require('express')
+const swaggerParaExpress = require('swagger-ui-express')
+const arquivoSwagger = require('../doc/swagger')
 const rotas = require('../routes/rotas')
-const path = require('path');
-
-// CONFIGURAÇÕES
-const app  = express()
-app.use(express.json())
-const localService = process.env.ADDRESS_SERVICE
+const path = require('path')
+const localServico = process.env.ADDRESS_SERVICE
 const porta = process.env.PORT
+const cores = {
+    reseta: "\x1b[0m",
+    verde: "\x1b[32m",
+    ciano: "\x1b[36m",
+    amarelo: "\x1b[33m",
+    magenta: "\x1b[35m",
+    vermelho: "\x1b[31m"
+}
 
-// levantando a documetação
-//const fs = require("fs")
-//const YAML = require('yaml')
-//const swaggerUi = require('swagger-ui-express')
-//const cors = require('cors')
-// Carrega o arquivo OpenAPI
-//const file = fs.readFileSync('../doc/swagger.yaml', 'utf8')
-//const file = fs.readFileSync(path.join(__dirname, '../doc/swaggger.yaml'), 'utf8')
-//const swaggerDocument = YAML.parse(file)
+const API  = express()
 
-// USANDO AS ROTAS
-//app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument)); // rota de documentação deve ser sempre a primeira
-//app.use(cors());
-app.use(rotas)
-app.use(express.json())
-app.use('/temp', express.static(path.join(__dirname, '../temp')));
+API.use(express.json())
+API.use('/api-docs', swaggerParaExpress.serve, swaggerParaExpress.setup(arquivoSwagger));
+API.use(rotas)
+API.use('/temp', express.static(path.join(__dirname, '../temp')));
 
+// ===================== FUNCAO UTILITARIA ================================= //
+function iniciarServidor(API, portaServico) {
+    return new Promise((resolve, rejeita) => {
+        const servidor = API.listen(portaServico, () => resolve(servidor))
+        servidor.on("ERRO", rejeita)
+    })
+}
 
-// EXECUTANDO SERVICO
-app.listen(
-    porta, () => {
-        console.log(`SERVIDOR RODANDO EM ${localService}:${porta}`)
-        //console.log('Rota de documentação: http://localhost:3000/api-docs');
-    }
-)
+// ==================== INICIALIZAÇÃO DO SERVIDOR ========================= //
+iniciarServidor(API, porta)
+    .then(() => {
+        const dataHora = new Date().toLocaleString("pt-BR", {
+            dateStyle: "short",
+            timeStyle: "medium"
+        })
+
+        console.log(
+            `${cores.verde}[API_UNIMED_HUGGY] Servidor iniciado com sucesso${cores.reseta}\n` +
+            `${cores.verde}> Endereço: ${localServico}:${porta}${cores.reseta}\n` +
+            `${cores.amarelo}> Ambiente: ${process.env.NODE_ENV || "desenvolvimento"}${cores.reseta}\n` +
+            `${cores.verde}> Iniciado em: ${dataHora}${cores.reseta}`
+        )
+    })
+    .catch((err) => {
+        if (err.code === "EADDRINUSE") {
+            console.error(`${cores.vermelho}[API_UNIMED_HUGGY] Erro: a porta ${porta} já está em uso.${cores.reseta}`)
+        } else {
+            console.error(`${cores.vermelho}[API_UNIMED_HUGGY] Erro ao iniciar o servidor:${cores.reseta}`, err)
+        }
+        process.exit(1)
+    })
