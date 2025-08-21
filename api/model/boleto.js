@@ -1,13 +1,15 @@
+// ======================== IMPORTAÇÕES =============================== //
 const db = require('oracledb')
 const banco = require('./banco')
 const path = require('path');
 const { NGINX_PORT } = process.env; // constantes de porta do NGINX
 const pdf = require('./pdf');
 const pathPdf = path.join(__dirname, "../temp/")
+
+// ============================ CLASSE PARA BOLETO ================================= //
 class Boleto {
 
-    // busca os boletos não pagos de um titular em até 3 meses
-    async buscarBoletosTitular(codigoTitular) {
+    async buscar_boletos_titular(codigoTitular) {
         let conexao
         try {
             conexao = await banco.conectarBanco()
@@ -22,33 +24,32 @@ class Boleto {
                 {codigoTitular},
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
-            
-            boletos.rows = this.removerBoletosParcelados(boletos.rows)
-            
-            let listaIds = this.pegarIdBoletos(boletos)
-            let listaEndereco = await this.criarBoletos(boletos)
-            let linhas = await this.pegarLinhasDigitaveis(listaIds)
-            
-            boletos.rows = this.adicionaLinhasDigitaveisEendereco(boletos, linhas, listaEndereco)
-        
+
+            boletos.rows = this.remover_boletos_parcelados(boletos.rows)
+            let listaIdsBoletos = this.pegar_id_boletos(boletos)
+            let listaEndereco = await this.criar_boletos_pegar_local_arquivo(boletos)
+            let linhasDigitaveis = await this.pegar_linhas_digitaveis(listaIdsBoletos)
+            boletos.rows = this.adicionar_linhas_digitaveis_enderecos(boletos, linhasDigitaveis, listaEndereco)
+            let arquivos = this.pegaNomesArquivos(listaEndereco, boletos)
+
+            boletos.rows[`arquivos`] = arquivos
+            // console.log(boletos.rows.arquivos)
             return boletos
-        } 
-        catch (erro) {
+            
+        } catch (erro) {
             throw erro
-        }
-        finally {
+        } finally {
             banco.desconectarBanco(conexao)
         }
     }
     
-    // pega as linhas digitaveis de cada boleto criando uma lista
-    async pegarLinhasDigitaveis(listaIds) {
-        let conexao
+    async pegar_linhas_digitaveis(listaIdsBoletos) {
+        let conexaoBanco
         let linhas = []
         try {
-            conexao = await banco.conectarBanco()
-            for(let id of listaIds) {
-                const linhasDigitaveis = await conexao.execute(
+            conexaoBanco = await banco.conectarBanco()
+            for(let id of listaIdsBoletos) {
+                const linhaDigitavel = await conexaoBanco.execute(
                     `
                     SELECT B.LINHA_DIGITAVEL
                     FROM TABLE (PKG_BOLETO_CLASS.BOLETO(P_ID_PAGAMENTO => :id,
@@ -58,58 +59,51 @@ class Boleto {
                     {id},
                     {outFormat:db.OUT_FORMAT_OBJECT}
                 )
-                if(linhasDigitaveis.rows.length > 0) {
-                    linhas.push(linhasDigitaveis.rows[0])
+                if(linhaDigitavel.rows.length > 0) {
+                    linhas.push(linhaDigitavel.rows[0])
                 }
             }
             return linhas
-        }
-        catch(erro) {
+        } catch(erro) {
             throw erro
-        }
-        finally {
-            banco.desconectarBanco(conexao)
+        } finally {
+            banco.desconectarBanco(conexaoBanco)
         }
     }
 
-    // pega os dados de cada boleto pelo identificador
-    async pegarDadosBoleto(idBoleto) {
-        let conexao
+    async pegar_dados_boleto(idBoleto) {
+        let conexaoBanco
         try{
-            conexao = await banco.conectarBanco()
-            const dadosBoleto = await conexao.execute(
+            conexaoBanco = await banco.conectarBanco()
+            const dadosBoleto = await conexaoBanco.execute(
                 `   
                 SELECT A.*,TO_CHAR(A.VENCIMENTO,'DD/MM/YYYY') DATA_VENCIMENTO, DIAS_VALIDADE,
                 BANCO, DIGITO_BANCO, RETORNA_NATUREZA_JURIDICA(A.NNUMETITU) NAT_JURIDICA
                 FROM TABLE(PKG_BOLETO_CLASS.BOLETO(p_id_pagamento => :idBoleto,
                                         p_id_jpaga     => 0,
-                                        p_id_docu      => 0)) A
+                                        p_id_docu      => 0)) A 
                 `,
                 {idBoleto},
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
             return dadosBoleto.rows[0]
-        }
-        catch(erro) {
+        } catch(erro) {
             throw erro
-        }
-        finally{
-            banco.desconectarBanco(conexao)
+        } finally {
+            banco.desconectarBanco(conexaoBanco)
         }
     }
 
-    // cria os boletos de acordo com as informações encontradas e salva na pasta temp
-    async criarBoletos(boletos){
+    async criar_boletos_pegar_local_arquivo(boletos){
         let endereco = []
-        try{
+        try {
             for(let indice = 0; indice < boletos.rows.length; indice++) {
-                let dados = await this.pegarDadosBoleto(boletos.rows[indice].NNUMEPAGA)
-                let boleto = new pdf.Pdf(dados)
-                let localFile = `${process.env.ADDRESS_SERVICE}:${NGINX_PORT}/temp/${dados.NUMERO_DOCUMENTO.replace(/\s+/g, "")}.pdf`
-                
+                let dadosBoleto = await this.pegar_dados_boleto(boletos.rows[indice].NNUMEPAGA)
+                let boleto = new pdf.Pdf(dadosBoleto)
+                let localArquivo = `${process.env.ADDRESS_SERVICE}:${NGINX_PORT}/temp/${dados.NUMERO_DOCUMENTO.replace(/\s+/g, "")}.pdf`
                 boleto.salve(pathPdf)
                 //localFile = this.encurtarLink(localFile)
-                endereco.push(localFile)
+                endereco.push(localArquivo)
             }
             return  endereco
         }
@@ -118,11 +112,7 @@ class Boleto {
         }
     }
 
-    // FUNÇÕES AUXILIARES
-
-    // Remove todo os boletos parcelados da lista de boleto deixa a apenas as parcela ou 
-    // boletos que são integrais
-    removerBoletosParcelados(listaBoletos) {
+    remover_boletos_parcelados(listaBoletos) {
         for(let indice = 0; indice < listaBoletos.length; indice++) {
             if(listaBoletos[indice]['CINSTPAGA'] != null) {
                 for(let posicao = 0; posicao < listaBoletos.length; posicao++) {
@@ -139,8 +129,7 @@ class Boleto {
         return listaBoletos
     }
 
-    // Pega os indentificadores de cada boleto e coloca em uma lista e a retorna
-    pegarIdBoletos(listaBoletos) {
+    pegar_id_boletos(listaBoletos) {
         let listaIds = []
         for(let indice = 0; indice < listaBoletos.rows.length; indice++) {
             listaIds[indice] = listaBoletos.rows[indice]['NNUMEPAGA']
@@ -148,18 +137,29 @@ class Boleto {
         return listaIds
     }
 
-    // Adiciona linhas digitaveis e endereços de acesso aos boletos
-    adicionaLinhasDigitaveisEendereco(boletos, linhas, localBoletos) {
+    adicionar_linhas_digitaveis_enderecos(boletos, linhas, enderecoBoletos) {
         let novoRows = []
         for(let indice = 0; indice < boletos.rows.length; indice++) {
             boletos.rows[indice]['LINHA_DIGITAVEL'] = linhas[indice]['LINHA_DIGITAVEL']
-            boletos.rows[indice]['LOCAL_BOLETO'] = localBoletos[indice]
+            boletos.rows[indice]['LOCAL_BOLETO'] = enderecoBoletos[indice]
+            //boletos.rows[indice]['ARQUIVO'] = arquivos[indice]
             novoRows.push(boletos.rows[indice])
         }
         return novoRows
     }
+    
+    pega_nomes_arquivos(enderecosBoletos) {
+        let nomeArquivos = {}
+        for(let indice = 0; indice < 3; indice++) {
+            if(indice < linhas.length) {
+                nomeArquivos[`nome${indice+1}`] = enderecosBoletos[indice].split('/').pop()
+            } else {
+                nomeArquivos[`nome${indice+1}`] = ''
+            }
+        }
+        return nomeArquivos
+    } 
 }
 
-module.exports = {
-    Boleto
-}
+// ============================EXPORTANDO======================================= //
+module.exports = { Boleto }
