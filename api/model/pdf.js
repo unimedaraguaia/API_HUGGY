@@ -515,7 +515,7 @@ class Pdf {
         return codigo;
     }
 
-    
+ 
     /**
      * Metodo que salva o boleto em PDF com o nome do boleto
      * @param {*} path caminho onde o documento deve ser salvo
