@@ -42,7 +42,7 @@ class Beneficiario {
                 `
                 SELECT U.NNUMETITU, U.CNOMEUSUA, U.NNUMEUSUA, U.NNUMEPESS
                 FROM HSSUSUA U, HSSPLAN P, HSSTITU T
-                WHERE U.C_CPFUSUA = :CPF
+                WHERE U.C_CPFUSUA = :numeroCpf
                 AND U.CTIPOUSUA = 'T'
                 AND U.CSITUUSUA = 'A'
                 AND U.NNUMEPLAN = P.NNUMEPLAN
@@ -58,7 +58,7 @@ class Beneficiario {
             return resultadoTitular
         }
         catch(erro) {
-            console.log(`[API] Erro ao buscar titular pelo cpf\n`)
+            console.error(` > Erro ao buscar titular do bolero pelo cpf\n`)
             throw erro
         }
         finally {
