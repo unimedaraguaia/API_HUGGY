@@ -30,10 +30,10 @@ class Boleto {
             let listaEndereco = await this.criar_boletos_pegar_local_arquivo(boletos)
             let linhasDigitaveis = await this.pegar_linhas_digitaveis(listaIdsBoletos)
             boletos.rows = this.adicionar_linhas_digitaveis_enderecos(boletos, linhasDigitaveis, listaEndereco)
-            let arquivos = this.pegaNomesArquivos(listaEndereco, boletos)
+            let arquivos = this.pega_nomes_arquivos(listaEndereco, boletos)
 
             boletos.rows[`arquivos`] = arquivos
-            // console.log(boletos.rows.arquivos)
+            console.log(boletos.rows.arquivos)
             return boletos
             
         } catch (erro) {
@@ -100,7 +100,8 @@ class Boleto {
             for(let indice = 0; indice < boletos.rows.length; indice++) {
                 let dadosBoleto = await this.pegar_dados_boleto(boletos.rows[indice].NNUMEPAGA)
                 let boleto = new pdf.Pdf(dadosBoleto)
-                let localArquivo = `${process.env.ADDRESS_SERVICE}:${NGINX_PORT}/temp/${dados.NUMERO_DOCUMENTO.replace(/\s+/g, "")}.pdf`
+                console.log(dadosBoleto)
+                let localArquivo = `${process.env.ADDRESS_SERVICE}:${NGINX_PORT}/temp/${dadosBoleto.NUMERO_DOCUMENTO.replace(/\s+/g, "")}.pdf`
                 boleto.salve(pathPdf)
                 //localFile = this.encurtarLink(localFile)
                 endereco.push(localArquivo)
@@ -151,7 +152,7 @@ class Boleto {
     pega_nomes_arquivos(enderecosBoletos) {
         let nomeArquivos = {}
         for(let indice = 0; indice < 3; indice++) {
-            if(indice < linhas.length) {
+            if(indice < enderecosBoletos.length) {
                 nomeArquivos[`nome${indice+1}`] = enderecosBoletos[indice].split('/').pop()
             } else {
                 nomeArquivos[`nome${indice+1}`] = ''
