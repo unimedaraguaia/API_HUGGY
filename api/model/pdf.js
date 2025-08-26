@@ -1,19 +1,14 @@
+// =============================== IMPORTAÇÕES ===================================== //     
 const { jsPDF } = require("jspdf")
 const fs = require("fs")
 const path = require('path');
 
-/**
- * Classe PDF: Utilizada para produzir os boleto em formato PDF 
- */
+// ============================== CLASSE PDF ===================================== //       
 class Pdf {
 
-    /**
-     * Metodo construtor dos PDF
-     * @param {*} dados informações necessárias para a criação do PDF (boleto)
-     */
     constructor(dados) {
-        // cria um objeto JSPDF
-        this.doc = new jsPDF(
+       
+        this.documento = new jsPDF(
             {
                 orientation: 'portrait',
                 unit: 'mm',
@@ -27,21 +22,14 @@ class Pdf {
         this.fileName = dados.NUMERO_DOCUMENTO
         this.fonte = 'helvetica'
         // Desenha o boleto e adiciona informações
-        this.desenhaGrade(this.doc)
-        this.instrucoes(this.doc)
-        this.nomeCampos(this.doc)
-        this.carregaLogo(this.doc)
-        this.addInfo(this.doc, dados)
-        this.gerarCodigoBarra(this.doc, dados.CODIGO_BARRAS)
+        this.desenha_grade(this.documento)
+        this.instrucoes(this.documento)
+        this.nome_campos(this.documento)
+        this.carrega_logo(this.documento)
+        this.add_info(this.documento, dados)
+        this.gerar_codigo_barra(this.documento, dados.CODIGO_BARRAS)
     }
-
-    /**
-     * Metodo de configuração de fonte 
-     * @param {*} doc Objeto onde as fotes serão mudadas
-     * @param {*} fonte Qual a fonte a ser usada
-     * @param {*} tamanho Qual o tamanho da fonte
-     * @param {*} estilo Qual o estilo de fonte
-     */
+    
     fonteConfig(doc, fonte, tamanho, estilo){
         // define a fonte, o tamanho e estilo.
         doc.setFont(this.fonte)              
@@ -49,12 +37,6 @@ class Pdf {
         doc.setFont(undefined, estilo)  
     }
 
-    /**
-     * Metodo que transforma um pdf em string e o anonimiza
-     * @param {*} cpf numero do CPF passado
-     * @param {*} anonimizaValores flag de anonimização
-     * @returns pode retornar um cpf anonimo ou nao (depende da flag)
-     */
     formataCPF(cpf, anonimizaValores = true) {
         
         cpf = String(cpf);
@@ -72,20 +54,10 @@ class Pdf {
         return cpf;
     }
 
-    /**
-     * Método para formatar valores para o padrão brasileiro
-     * @param {*} valor valor que vem do banco de dados no padrão americano
-     * @returns valor formatado no padrão PT_BR
-     */
     formatarValor(valor) {
         return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
-    /**
-     * Metodo utilizado para colocar strin vazia em campos nulos
-     * @param {*} info Recebe uma informação que pode ser nula
-     * @returns Uma string vazia ou a prórpia informação
-     */
     formataNull(info) {
 
         if(info == null) {
@@ -96,11 +68,6 @@ class Pdf {
         }
     }
 
-    /**
-     * Pega um data passada em formato ISO e formata para padrão dd/mm/aaaa
-     * @param {*} dataISO data em formato iso
-     * @returns data no padrão dd/mm/aaaa
-     */
     formatarData(dataISO) {
         const data = new Date(dataISO);
         const dia = String(data.getDate()).padStart(2, '0');
@@ -109,11 +76,7 @@ class Pdf {
         return `${dia}/${mes}/${ano}`;
     }
 
-    /**
-     * Metodo que desenha toda da grade do documento (boleto), linhas celulas e etc
-     * @param {*} doc objeto que será salvo como pdf
-     */
-    desenhaGrade(doc) {
+    desenha_grade(doc) {
         doc.setFillColor(200);
         //linha 1
         doc.rect(55, 53, 0.5, 6, 'F')
@@ -208,11 +171,7 @@ class Pdf {
         doc.rect(10, 267, 190, 0.2, 'F')
     }
 
-    /**
-     * Preenche no documento todo os nomes dos campos 
-     * @param {*} doc Objeto que representa o documento
-     */
-    nomeCampos(doc) {
+    nome_campos(doc) {
         this.fonteConfig(doc, this.fonte, 6, 'normal')
         doc.text('Beneficiário', 11, 64);
         doc.text('Coop. contratante / Cód. Beneficiário', 101, 64);
@@ -277,10 +236,6 @@ class Pdf {
         doc.text("Autenticação mecânica - Ficha de Compensação", 158, 269)
     }
 
-    /**
-     * Metodo que carrega as instruções do documento
-     * @param {*} doc Objerto que representa o documento
-     */
     instrucoes(doc) {
 
         const linha = '-'.repeat(260);
@@ -311,11 +266,7 @@ class Pdf {
         
     }
     
-    /**
-     * Metodo que carrega a log do Sicredi e da ANS
-     * @param {*} doc Objeto que representa o documento
-     */
-    carregaLogo(doc) {
+    carrega_logo(doc) {
         // obtem as logos
         let logoBanco = path.join(__dirname, '../img/sicredi.jpg')
         let logoANS = path.join(__dirname,'../img/Registro ANS.png')
@@ -340,12 +291,7 @@ class Pdf {
         }
     }
 
-    /**
-     * Metodo que preenche o documento com as informaçõe encontradas
-     * @param {*} doc Objeto que representa o documento
-     * @param {*} dados informações obtidas do banco com relação ao documento
-     */
-    addInfo(doc, dados) {
+    add_info(doc, dados) {
         
         doc.setFont(this.fonte, 'bold')             //define a fonte
         doc.setFontSize(12)
@@ -423,13 +369,6 @@ class Pdf {
         doc.text(`Contrato: ${dados.CONTRATO}`,165, 250 )
     }
 
-    /**
-     * Metodo utilizado para desenhar código de barra no documento
-     * @param {*} doc Objeto que representa o documento
-     * @param {*} largura largura do codigo
-     * @param {*} altura altura do codigo
-     * @param {*} preenchido flag de preenchimento 
-     */
     desenharBarra(doc, largura, altura, preenchido) {
         try{
 
@@ -449,13 +388,7 @@ class Pdf {
         }
     }
 
-    /**
-     * Gera o codigo de barras de acordo com o valor passado
-     * @param {*} doc Objeto que presenta o documento
-     * @param {*} valor Valor a ser representado no codigo de barras
-     * @returns retona o codigo de barras
-     */
-    gerarCodigoBarra(doc, valor) {
+    gerar_codigo_barra(doc, valor) {
         
         let codigo = '';
         const a = 0.27;
@@ -515,20 +448,11 @@ class Pdf {
         return codigo;
     }
 
- 
-    /**
-     * Metodo que salva o boleto em PDF com o nome do boleto
-     * @param {*} path caminho onde o documento deve ser salvo
-     */
     salve(path){
         this.doc.save(`${path}${this.fileName.replace(/\s+/g, "")}.pdf`)
     }
 }
 
-/**
- * Exporta o objeto
- */
+// ======================================== EXPORTAÇÃO ======================================== //
 
-module.exports = {
-    Pdf
-}
+module.exports = { Pdf }
