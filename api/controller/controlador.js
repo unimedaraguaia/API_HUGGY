@@ -42,7 +42,7 @@ const buscar_titular_boleto_digitos = async (req, res) => {
 }
 
 const buscar_titular_guias = async (req, res) => {
-    const {cpf} = req.params;
+    const { cpf } = req.headers
     try {
         const Beneficiario = new beneficiario.Beneficiario()
         const dadosTitular = await Beneficiario.buscar_titular_ativo_guias(cpf)
