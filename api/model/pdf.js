@@ -449,7 +449,7 @@ class Pdf {
     }
 
     salve(path){
-        this.doc.save(`${path}${this.fileName.replace(/\s+/g, "")}.pdf`)
+        this.documento.save(`${path}${this.fileName.replace(/\s+/g, "")}.pdf`)
     }
 }
 
