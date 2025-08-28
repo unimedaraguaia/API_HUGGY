@@ -5,6 +5,7 @@ const swaggerParaExpress = require('swagger-ui-express')
 const arquivoSwagger = require('../doc/swagger')
 const rotas = require('../routes/rotas')
 const path = require('path')
+const limparArquivosAntigos = require('../jobs/limparTemp');
 const localServico = process.env.ADDRESS_SERVICE
 const porta = process.env.PORT
 const cores = {
@@ -45,6 +46,8 @@ iniciarServidor(API, porta)
             `${cores.amarelo}> Ambiente: ${process.env.NODE_ENV || "desenvolvimento"}${cores.reseta}\n` +
             `${cores.verde}> Iniciado em: ${dataHora}${cores.reseta}`
         )
+
+        limparArquivosAntigos(path.join(__dirname, '../temp'), 60)
     })
     .catch((err) => {
         if (err.code === "EADDRINUSE") {
