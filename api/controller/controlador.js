@@ -18,10 +18,10 @@ const buscar_titular_boleto_digitos = async (req, res) => {
                 { 
                     mensagem:"200",
                     titular: {
-                        numero_titular: dadosTitular.rows[0].NNUMETITU,
+                        numerotitular: dadosTitular.rows[0].NNUMETITU,
                         nome: dadosTitular.rows[0].CNOMEUSUA,
-                        numero_usua:dadosTitular.rows[0].NNUMEUSUA,
-                        id_pessoa:dadosTitular.rows[0].NNUMEPESS
+                        numerousua:dadosTitular.rows[0].NNUMEUSUA,
+                        idpessoa:dadosTitular.rows[0].NNUMEPESS
                     }
                 }
             )
@@ -42,7 +42,7 @@ const buscar_titular_boleto_digitos = async (req, res) => {
 }
 
 const buscar_titular_guias = async (req, res) => {
-    const { cpf } = req.params;
+    const {cpf} = req.params;
     try {
         const Beneficiario = new beneficiario.Beneficiario()
         const dadosTitular = await Beneficiario.buscar_titular_ativo_guias(cpf)
@@ -75,10 +75,10 @@ const buscar_titular_guias = async (req, res) => {
 }
 
 const buscar_boletos = async (req, res) => {
-    const { numero_titular } = req.headers;
+    const {numerotitular} = req.headers;
     try {
         const Boleto = new boleto.Boleto()
-        const dadosBoletos = await Boleto.buscar_boletos_titular(numero_titular)
+        const dadosBoletos = await Boleto.buscar_boletos_titular(numerotitular)
         if (dadosBoletos.rows.length > 0) {
             resposta = {
                 mensagem:'200',
@@ -95,7 +95,7 @@ const buscar_boletos = async (req, res) => {
             }
             res.status(200).json(resposta);
         } else {
-            console.log("[API] Boletos nao encontrados")
+            console.log("[API] > Boletos nao encontrados")
             res.status(200).json(
                 {
                     mensagem: "404"
@@ -186,10 +186,10 @@ const listar_guias = async (req, res) => {
 }
 
 const criar_protocolo_boleto = async (req, res) => {
-    const { id_pessoa } = req.headers
+    const { idpessoa } = req.headers
     try {
         const Protocolo = new protocolo.Protocolo()
-        const resultado = await Protocolo.criar_protocolo_segunda_via_boleto(id_pessoa)
+        const resultado = await Protocolo.criar_protocolo_segunda_via_boleto(idpessoa)
         if(resultado.status == '200') {
             res.status(200).json(
                 {
@@ -219,14 +219,14 @@ const criar_protocolo_boleto = async (req, res) => {
 }
 
 const adicionar_atendimento = async (req, res) => {
-    const { id_protocolo, 
-            tipo_atendimento, 
-            id_usuario 
+    const { idprotocolo, 
+            tipoatendimento, 
+            idusuario 
     } = req.headers
 
     try {
         const Atendimento = new atendimento.Atendimento()
-        const resultado = await Atendimento.criar_atendimento_segunda_via_boleto(id_protocolo, id_usuario, tipo_atendimento)  
+        const resultado = await Atendimento.criar_atendimento_segunda_via_boleto(idprotocolo, idusuario, tipoatendimento)  
         if(resultado.status == "200" && resultado.atendimento.id > 0) {  
             console.log(`[API] Sucesso ao criar atendimento`)
             res.status(200).json(
@@ -256,16 +256,16 @@ const adicionar_atendimento = async (req, res) => {
 }
 
 const adicionar_mensagem_atendimento_boleto = async (req, res) => {
-    const { id_atendimento, mensagem } = req.headers
+    const { idatendimento, mensagem } = req.headers
     try {
         const Atendimento = new atendimento.Atendimento()
-        const operacao = await Atendimento.adicionar_mensagem_atendimento_segunda_via_boleto(id_atendimento, mensagem)
+        const operacao = await Atendimento.adicionar_mensagem_atendimento_segunda_via_boleto(idatendimento, mensagem)
         if(operacao.status == "200") {
             console.log(`[API] Mensagem adicionada`)
             res.status(200).json(
                 {
                     mensagem: "200",
-                    info: `Mensagem adicionada ao atendimento ${id_atendimento}`
+                    info: `Mensagem adicionada ao atendimento ${idatendimento}`
                 }
             )
         } else {
@@ -273,7 +273,7 @@ const adicionar_mensagem_atendimento_boleto = async (req, res) => {
             res.status(500).json(
                 {
                     mensagem: "500",
-                    info: `Falha ao adicionar mensagem no atendimento ${id_atendimento}`
+                    info: `Falha ao adicionar mensagem no atendimento ${idatendimento}`
                 }
             )
         }
@@ -282,23 +282,23 @@ const adicionar_mensagem_atendimento_boleto = async (req, res) => {
         res.status(500).json(
             {
                 mensagem: "500",
-                info: `Falha ao adicionar mensagem no atendimento ${id_atendimento}`
+                info: `Falha ao adicionar mensagem no atendimento ${idatendimento}`
             }
         )
     }
 }
 
 const fechar_atendimento = async (req, res) => {
-    const { id_atendimento } = req.headers
+    const { idatendimento } = req.headers
     try {
         const Atendimento = new atendimento.Atendimento()
-        const operacao = await Atendimento.fechar_atendimento_crm(id_atendimento)
+        const operacao = await Atendimento.fechar_atendimento_crm(idatendimento)
         if(operacao.status == "200") {
             console.log(`[API] Atendimento fechado`)
             res.status(200).json(
                 {
                     mensagem: "200",
-                    info: `Atendimento Fechado ${id_atendimento}`
+                    info: `Atendimento Fechado ${idatendimento}`
                 }
             )
         } else {
@@ -315,7 +315,7 @@ const fechar_atendimento = async (req, res) => {
         res.status(500).json(
             {
                 mensagem: "500",
-                info: `Falha ao fechar atendimento ${id_atendimento}`
+                info: `Falha ao fechar atendimento ${idatendimento}`
             }
         )
     }
