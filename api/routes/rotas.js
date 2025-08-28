@@ -3,7 +3,7 @@ const rotas = require('express').Router()
 const controlador = require('../controller/controlador')
 
 // ================== ROTAS DE GET ===================== //
-rotas.get('/titular/:cpf',  controlador.buscar_titular_guias)
+rotas.get('/titularGuias',  controlador.buscar_titular_guias)
 rotas.get('/titularBoleto', controlador.buscar_titular_boleto_digitos)
 rotas.get('/boleto', controlador.buscar_boletos)
 rotas.get('/guias/:numeroGuia', controlador.buscar_guia)
