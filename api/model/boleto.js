@@ -27,13 +27,13 @@ class Boleto {
 
             boletos.rows = this.remover_boletos_parcelados(boletos.rows)
             let listaIdsBoletos = this.pegar_id_boletos(boletos)
-            let listaEndereco = await this.criar_boletos_pegar_local_arquivo(boletos)
-            let linhasDigitaveis = await this.pegar_linhas_digitaveis(listaIdsBoletos)
+            let listaEndereco = await this.criar_boletos_pegar_local_arquivo(boletos, conexao)
+            let linhasDigitaveis = await this.pegar_linhas_digitaveis(listaIdsBoletos, conexao)
             boletos.rows = this.adicionar_linhas_digitaveis_enderecos(boletos, linhasDigitaveis, listaEndereco)
             let arquivos = this.pega_nomes_arquivos(listaEndereco, boletos)
 
             boletos.rows[`arquivos`] = arquivos
-            console.log(boletos.rows.arquivos)
+    
             return boletos
             
         } catch (erro) {
@@ -43,13 +43,11 @@ class Boleto {
         }
     }
     
-    async pegar_linhas_digitaveis(listaIdsBoletos) {
-        let conexaoBanco
+    async pegar_linhas_digitaveis(listaIdsBoletos, conectorBanco) {
         let linhas = []
         try {
-            conexaoBanco = await banco.conectarBanco()
             for(let id of listaIdsBoletos) {
-                const linhaDigitavel = await conexaoBanco.execute(
+                const linhaDigitavel = await conectorBanco.execute(
                     `
                     SELECT B.LINHA_DIGITAVEL
                     FROM TABLE (PKG_BOLETO_CLASS.BOLETO(P_ID_PAGAMENTO => :id,
@@ -66,16 +64,12 @@ class Boleto {
             return linhas
         } catch(erro) {
             throw erro
-        } finally {
-            banco.desconectarBanco(conexaoBanco)
         }
     }
 
-    async pegar_dados_boleto(idBoleto) {
-        let conexaoBanco
-        try{
-            conexaoBanco = await banco.conectarBanco()
-            const dadosBoleto = await conexaoBanco.execute(
+    async pegar_dados_boleto(idBoleto, conectorBanco) {
+        try {
+            const dadosBoleto = await conectorBanco.execute(
                 `   
                 SELECT A.*,TO_CHAR(A.VENCIMENTO,'DD/MM/YYYY') DATA_VENCIMENTO, DIAS_VALIDADE,
                 BANCO, DIGITO_BANCO, RETORNA_NATUREZA_JURIDICA(A.NNUMETITU) NAT_JURIDICA
@@ -89,18 +83,16 @@ class Boleto {
             return dadosBoleto.rows[0]
         } catch(erro) {
             throw erro
-        } finally {
-            banco.desconectarBanco(conexaoBanco)
         }
     }
 
-    async criar_boletos_pegar_local_arquivo(boletos){
+    async criar_boletos_pegar_local_arquivo(boletos, conectorBanco){
         let endereco = []
         try {
             for(let indice = 0; indice < boletos.rows.length; indice++) {
-                let dadosBoleto = await this.pegar_dados_boleto(boletos.rows[indice].NNUMEPAGA)
+                let dadosBoleto = await this.pegar_dados_boleto(boletos.rows[indice].NNUMEPAGA, conectorBanco)
                 let boleto = new pdf.Pdf(dadosBoleto)
-                console.log(dadosBoleto)
+                //console.log(dadosBoleto)
                 let localArquivo = `${process.env.ADDRESS_SERVICE}:${NGINX_PORT}/temp/${dadosBoleto.NUMERO_DOCUMENTO.replace(/\s+/g, "")}.pdf`
                 boleto.salve(pathPdf)
                 //localFile = this.encurtarLink(localFile)
