@@ -13,7 +13,7 @@ class Beneficiario {
                 `
                 SELECT U.NNUMETITU, U.CNOMEUSUA, U.NNUMEUSUA
                 FROM HSSUSUA U
-                WHERE U.C_CPFUSUA = :cpf
+                WHERE U.C_CPFUSUA = :numeroCpf
                 AND U.CSITUUSUA = 'A'
                 AND U.CTIPOUSUA = 'T'
                 `,
