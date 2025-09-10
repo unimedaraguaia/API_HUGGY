@@ -26,14 +26,18 @@ class Boleto {
             )
 
             boletos.rows = this.remover_boletos_parcelados(boletos.rows)
+            
             let listaIdsBoletos = this.pegar_id_boletos(boletos)
             let listaEndereco = await this.criar_boletos_pegar_local_arquivo(boletos, conexao)
-            let linhasDigitaveis = await this.pegar_linhas_digitaveis(listaIdsBoletos, conexao)
-            boletos.rows = this.adicionar_linhas_digitaveis_enderecos(boletos, linhasDigitaveis, listaEndereco)
-            let arquivos = this.pega_nomes_arquivos(listaEndereco, boletos)
 
-            boletos.rows[`arquivos`] = arquivos
-    
+            if(listaEndereco.length == 0) {
+                boletos.rows = []
+            } else {
+                let linhasDigitaveis = await this.pegar_linhas_digitaveis(listaIdsBoletos, conexao)
+                boletos.rows = this.adicionar_linhas_digitaveis_enderecos(boletos, linhasDigitaveis, listaEndereco)
+                let arquivos = this.pega_nomes_arquivos(listaEndereco, boletos)
+                boletos.rows[`arquivos`] = arquivos
+            }
             return boletos
             
         } catch (erro) {
@@ -80,7 +84,10 @@ class Boleto {
                 {idBoleto},
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
+            
+            
             return dadosBoleto.rows[0]
+
         } catch(erro) {
             throw erro
         }
@@ -91,16 +98,24 @@ class Boleto {
         try {
             for(let indice = 0; indice < boletos.rows.length; indice++) {
                 let dadosBoleto = await this.pegar_dados_boleto(boletos.rows[indice].NNUMEPAGA, conectorBanco)
-                let boleto = new pdf.Pdf(dadosBoleto)
-                //console.log(dadosBoleto)
-                let localArquivo = `${process.env.ADDRESS_SERVICE}:${NGINX_PORT}/temp/${dadosBoleto.NUMERO_DOCUMENTO.replace(/\s+/g, "")}.pdf`
-                boleto.salve(pathPdf)
-                //localFile = this.encurtarLink(localFile)
-                endereco.push(localArquivo)
+                
+                let numeroDocumentoPago = dadosBoleto.NDOCUPAGA
+                let idPagamento = dadosBoleto.ID_PAGAMENTO
+                
+                let valor = await this.verifica_homologacao(numeroDocumentoPago, idPagamento, conectorBanco)
+                if(valor == 'S') {
+                    let boleto = new pdf.Pdf(dadosBoleto)
+                    //console.log(dadosBoleto)
+                    let localArquivo = `${process.env.ADDRESS_SERVICE}:${NGINX_PORT}/temp/${dadosBoleto.NUMERO_DOCUMENTO.replace(/\s+/g, "")}.pdf`
+                    boleto.salve(pathPdf)
+                    //localFile = this.encurtarLink(localFile)
+                    endereco.push(localArquivo)
+                }
+
             }
-            return  endereco
-        }
-        catch(erro) {
+            return endereco
+            
+        } catch(erro) {
             throw erro
         }
     }
@@ -151,7 +166,38 @@ class Boleto {
             }
         }
         return nomeArquivos
-    } 
+    }
+
+    async verifica_homologacao(numeroDocumentoPago, idPagamento, conectorBanco) {
+        try {
+            const homologado = await conectorBanco.execute(
+                `
+                SELECT PKG_BOLETO_CLASS.LAYOUT_HOMOLOGADO(HSSLOPG.CLREMLOPG) HOMOLOGADO
+                FROM HSSPAGA,HSSLOPG
+                WHERE (:idPagamento > 0 and HSSPAGA.NNUMEPAGA = :idPagamento)
+                AND HSSPAGA.NNUMELOPG = HSSLOPG.NNUMELOPG
+                UNION
+                SELECT PKG_BOLETO_CLASS.LAYOUT_HOMOLOGADO(HSSLOPG.CLREMLOPG) HOMOLOGADO
+                FROM FINDOCU, HSSLOPG
+                WHERE (:numeroDocumentoPago > 0 and FINDOCU.NNUMEDOCU = :numeroDocumentoPago)
+                AND FINDOCU.NNUMECONT = HSSLOPG.NNUMECONT
+                AND HSSLOPG.CMODALOPG <> 'D'
+                `,
+                {
+                    idPagamento: idPagamento,
+                    numeroDocumentoPago: numeroDocumentoPago
+                }
+            )
+            if (homologado === 'S') {
+                return true;
+            } else {
+                return false;
+            }
+    
+        } catch(erro) {
+            throw erro
+        } 
+    }
 }
 
 // ============================EXPORTANDO======================================= //
