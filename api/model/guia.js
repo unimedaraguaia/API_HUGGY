@@ -1,14 +1,17 @@
+// ==================================== IMPORTACOES ============================ //
+const rotas = require('../routes/rotas')
 const banco = require('./banco')
 const db = require('oracledb')
 
+// ================================= CLASSE GUIAS ================================ //
 class Guia{
-    // lista as ultimas 3 guias de um titular pelo o identificador dos mesmo
-    async listarGuiasBeneficiario(idTitular) {
-        let conexao
+    
+    async listar_guias_beneficiario(idTitular) {
+        let conexaoBanco
         let listaGuia = []
         try{
-            conexao = await banco.conectarBanco()
-            const listaGuias = await conexao.execute(
+            conexaoBanco = await banco.conectarBanco()
+            const listaGuias = await conexaoBanco.execute(
                 `
                 SELECT 
                 G.NNUMEGUIA
@@ -20,30 +23,30 @@ class Guia{
                 {idTitular},
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
-            // Pega somente guias liberadas
             for (let i = 0; i < listaGuias.rows.length; i++) {
-                let dadosGuia = await this.pegarDadosGuiaListadas(listaGuias.rows[i]['NNUMEGUIA']) 
+                let dadosGuia = await this.pegar_dados_guia_listada(listaGuias.rows[i]['NNUMEGUIA'], conexaoBanco) 
                 if(dadosGuia.rows[0].STATUS == 'Liberada') {
                     listaGuia.push(dadosGuia.rows[0])
                 }
             }
-            
             listaGuias.rows = listaGuia
+            //listaGuias.rows['numerosguias'] = numerosGuias
             return listaGuias
         }
         catch(erro) {
+            console.log("[API] Erro ao listar guias do beneficiário", erro)
             throw erro
         }
         finally {
-            banco.desconectarBanco(conexao)
+            banco.desconectarBanco(conexaoBanco)
         }
     }
-    // pega os dado da guia pelo numero de identificação da mesma
-    async pegarDadosGuia(numeroGuia) {
-        let conexao
+    
+    async pegar_dados_guia(numeroGuia, numeroUsuario) {
+        let conexaoBanco
         try{
-            conexao = await banco.conectarBanco()
-            const dadosGuia = await conexao.execute(
+            conexaoBanco = await banco.conectarBanco()
+            const dadosGuia = await conexaoBanco.execute(
                 `
                 SELECT 
                 ID_GUIA, 
@@ -53,37 +56,34 @@ class Guia{
                 NOME_OPERADOR,
                 ID_USUARIO,
                 TO_CHAR(EMISSAO, 'DD/MM/YYYY') AS EMISSAO, 
-                TO_CHAR(VALIDADE, 'DD/MM/YYYY') AS VALIDADE,
-                TO_CHAR(PROCEDIMENTOS) AS PROCEDIMENTOS
+                TO_CHAR(VALIDADE, 'DD/MM/YYYY') AS VALIDADE
                 FROM TABLE(PKG_GUIA.DADOS_GUIA(:numeroGuia))
                 `,
                 {numeroGuia},
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
-            //delete dadosGuia.rows[0]['PROCEDIMENTOS'];
-            const procedimentos = await this.pegarProcedimentosGuia(numeroGuia)
-            
+            //const procedimentos = await this.pegar_procedimentos_guia(numeroGuia, conexaoBanco)
             if(dadosGuia.rows[0]['NOME_OPERADOR'] == null){
                 dadosGuia.rows[0]['NOME_OPERADOR'] = " "
             }
-
-            dadosGuia.rows[0]['PROCEDIMENTOS'] = procedimentos
-
+            if(dadosGuia.rows[0]['ID_USUARIO'] != Number(numeroUsuario)) {
+                dadosGuia.rows = []
+                return dadosGuia
+            }
+            
             return dadosGuia
+
         }catch(erro){
-            //console.log(erro)
+            console.log("[API] Erro ao pegar dados da guia")
             throw erro
         }finally{
-            banco.desconectarBanco(conexao)
+            banco.desconectarBanco(conexaoBanco)
         }
     }
 
-    /* PROCEDIMENTO AUXILIAR */
-    async pegarDadosGuiaListadas(numeroGuia) {
-        let conexao
-        try{
-            conexao = await banco.conectarBanco()
-            const dadosGuia = await conexao.execute(
+    async pegar_dados_guia_listada(numeroGuia, conectorBanco) {
+        try {
+            const dadosGuia = await conectorBanco.execute(
                 `
                 SELECT 
                     ID_GUIA, 
@@ -98,18 +98,14 @@ class Guia{
             //delete dadosGuia.rows[0]['PROCEDIMENTOS'];
             //console.log(dadosGuia.rows[0])
             return dadosGuia
-        }catch(erro){
-            console.log(erro)
-        }finally{
-            banco.desconectarBanco(conexao)
+        } catch(erro) {
+            console.log("[API] Erro ao pegar dados da guia listada")
         }
     }
 
-    async pegarProcedimentosGuia(numeroGuia) {
-        let conexao
+    async pegar_procedimentos_guia(numeroGuia, conectorBanco) {
         try { 
-            conexao = await banco.conectarBanco()
-            const procedimentos = await conexao.execute(
+            const procedimentos = await conectorBanco.execute(
                 `
                 SELECT PR.CNOMEPMED, PG.CSTATPGUI
                 FROM HSSPGUI PG, HSSPMED PR
@@ -120,41 +116,26 @@ class Guia{
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
             //console.log(procedimentos.rows)
-            const dadosProcedimento = this.pegaDadosProcedimentos(procedimentos.rows)
+            const dadosProcedimento = this.pegar_dados_procedimentos(procedimentos.rows)
             return dadosProcedimento
 
-        }
-        catch(erro){
-            
+        } catch(erro) {
+            console.log("[API] Erro ao pegar os procedimentos das guias")
             throw erro
         }
-        finally{
-            banco.desconectarBanco(conexao)
-        }
     }
 
-    pegaDadosProcedimentos(listaProcedimentos) {
-        let procedimentos = {}
-        let status
-        for(let index = 0; index < listaProcedimentos.length; index++) {
-
-            if(listaProcedimentos[index].CSTATPGUI == 'N'){
-                status = "Não Liberado"
-            }
-            else {
-                status = "Liberado"
-            }
-
-            procedimentos[`procedimento${index+1}`] = {
-                "nome": listaProcedimentos[index].CNOMEPMED,
-                "status": `${status}`
-            }
+    pegar_numeros_guias(listaGuias) {
+        let numeroGuia = {}
+        for(let indice = 0; indice < 3; indice++) {
+           if(indice < listaGuias.length) {
+                numeroGuia[`numeros${indice+1}`] = listaGuias[indice]['NNUMEGUIA']
+           } else {
+            numeroGuia[`numeros${indice+1}`] = ''
+           }
         }
-
-        return procedimentos
+        return numeroGuia
     }
 }
-
-module.exports = {
-    Guia
-}
+// =============================== EXPORTANDO =================================== //
+module.exports = { Guia }

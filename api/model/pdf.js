@@ -1,70 +1,82 @@
+// =============================== IMPORTAÇÕES ===================================== //     
 const { jsPDF } = require("jspdf")
 const fs = require("fs")
 const path = require('path');
 
+// ============================== CLASSE PDF ===================================== //       
 class Pdf {
-    // COnstrutor
-    constructor(dados){
-        this.doc = new jsPDF({
-            orientation: 'portrait',
-            unit: 'mm',
-            format: 'a4'
-        })
+
+    constructor(dados) {
+       
+        this.documento = new jsPDF(
+            {
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            }
+        )
         // Posições iniciais para desenho do código de barras
         this.posX = 10
         this.posY = 268
+        // Define o nome do documento e a fonte a ser utilizada
         this.fileName = dados.NUMERO_DOCUMENTO
         this.fonte = 'helvetica'
-        // Desenha o boleto e adicioan informações
-        this.desenhaGrade(this.doc)
-        this.instrucoes(this.doc)
-        this.nomeCampos(this.doc)
-        this.carregaLogo(this.doc)
-        this.addInfo(this.doc, dados)
-        this.gerarCodigoBarra(this.doc, dados.CODIGO_BARRAS)
+        // Desenha o boleto e adiciona informações
+        this.desenha_grade(this.documento)
+        this.instrucoes(this.documento)
+        this.nome_campos(this.documento)
+        this.carrega_logo(this.documento)
+        this.add_info(this.documento, dados)
+        this.gerar_codigo_barra(this.documento, dados.CODIGO_BARRAS)
     }
-    // configura a fonte  
+    
     fonteConfig(doc, fonte, tamanho, estilo){
-        doc.setFont(this.fonte)              //define a fonte
-        doc.setFontSize(tamanho)        //define o tamanho da fonte
-        doc.setFont(undefined, estilo)  //define o estilo com negrito
+        // define a fonte, o tamanho e estilo.
+        doc.setFont(this.fonte)              
+        doc.setFontSize(tamanho)        
+        doc.setFont(undefined, estilo)  
     }
-    // formata os cpf e o anonimiza
+
     formataCPF(cpf, anonimizaValores = true) {
+        
         cpf = String(cpf);
-      
+        
         if (cpf.length === 11) {
+          
           if (anonimizaValores) {
-            cpf = `${cpf.substring(0, 3)}.XXX.XXX-XX`;
-          } else {
+            cpf = `${cpf.substring(0, 3)}.XXX.XXX-XX`
+          } 
+          else {
             cpf = `${cpf.substring(0, 3)}.${cpf.substring(3, 6)}.${cpf.substring(6, 9)}-${cpf.substring(9, 11)}`;
           }
         }
-      
+
         return cpf;
     }
-    // formata os valores
+
     formatarValor(valor) {
         return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
-    // formada dados nulos
-    formataNull(info){
-        if(info == null){
+
+    formataNull(info) {
+
+        if(info == null) {
             return ""
-        }else{
+        }
+        else {
             return info
         }
     }
-    // formata a data
+
     formatarData(dataISO) {
         const data = new Date(dataISO);
         const dia = String(data.getDate()).padStart(2, '0');
-        const mes = String(data.getMonth() + 1).padStart(2, '0'); // mês começa em 0
+        const mes = String(data.getMonth() + 1).padStart(2, '0');
         const ano = data.getFullYear();
         return `${dia}/${mes}/${ano}`;
     }
-    // desenha o layout do PDF
-    desenhaGrade(doc){
+
+    desenha_grade(doc) {
         doc.setFillColor(200);
         //linha 1
         doc.rect(55, 53, 0.5, 6, 'F')
@@ -158,8 +170,8 @@ class Pdf {
         // linha final
         doc.rect(10, 267, 190, 0.2, 'F')
     }
-    // carrega os nome dos campos
-    nomeCampos(doc) {
+
+    nome_campos(doc) {
         this.fonteConfig(doc, this.fonte, 6, 'normal')
         doc.text('Beneficiário', 11, 64);
         doc.text('Coop. contratante / Cód. Beneficiário', 101, 64);
@@ -223,8 +235,9 @@ class Pdf {
     
         doc.text("Autenticação mecânica - Ficha de Compensação", 158, 269)
     }
-    // carrega instruções
-    instrucoes(doc){
+
+    instrucoes(doc) {
+
         const linha = '-'.repeat(260);
         //Cabeçalho 
         this.fonteConfig(doc, this.fonte, 10, 'bold')
@@ -248,37 +261,37 @@ class Pdf {
         doc.text('Corte na linha pontilhada', 10, 120);
         doc.text(linha, 10, 124);
     
-    
         this.fonteConfig(doc, this.fonte, 6, 'bold')
         doc.text('Instruções (Texto de responsabilidade do cedente)', 11, 192)
-    
         
     }
-    // carrega a logo (Problema)
-    carregaLogo(doc){
+    
+    carrega_logo(doc) {
+        // obtem as logos
         let logoBanco = path.join(__dirname, '../img/sicredi.jpg')
         let logoANS = path.join(__dirname,'../img/Registro ANS.png')
-    
+        // codifica me base 64
         const logoBanco64 = fs.readFileSync(logoBanco, { encoding: 'base64' })
         const logoANS64 = fs.readFileSync(logoANS, { encoding: 'base64' })
-    
+        // carrreg nas variveis
         const banco = `data:image/png;base64,${logoBanco64}`
         const ANS = `data:image/png;base64,${logoANS64}`
-        
+        // define o tamanho
         let larguraImagem = 30
         let alturaImagem = 10
-    
+        //adiciona no documento
         if (banco && larguraImagem && alturaImagem) {
             doc.addImage(banco, 'JPG', 10, 49, larguraImagem, alturaImagem)
             doc.addImage(banco, 'JPG', 10, 142, larguraImagem, alturaImagem)
         }
-    
+        // adiciona no documento 
         if(ANS){
             doc.addImage(ANS, 'PNG', 176, 89, 20, 6)
             doc.addImage(ANS, 'PNG', 115, 228, 20, 6)
         }
     }
-    addInfo(doc, dados){
+
+    add_info(doc, dados) {
         
         doc.setFont(this.fonte, 'bold')             //define a fonte
         doc.setFontSize(12)
@@ -328,7 +341,11 @@ class Pdf {
         doc.text(`${dados.ESPECIE}`, 71, 187)
         doc.text(`${this.formataNull(dados.QUANTIDADE)}`, 81, 187)
         doc.text(`${this.formatarValor(dados.VALOR)}`, 111, 187)
-        doc.text(`${this.formatarValor(dados.VALOR_NOTA)}`, 141, 187)
+        /**Essa alteração abaixo é devio alguns boletos estarem com o campo nulo de VALOR_NOTA no banco de teste
+         * como não consigo descobri o motivo mudei para o campo VALOR apenas
+         */
+        //doc.text(`${this.formatarValor(dados.VALOR_NOTA)}`, 141, 187)
+        doc.text(`${this.formatarValor(dados.VALOR)}`, 141, 187)
     
         doc.setFont(this.fonte, 'bold')             //define a fonte
         doc.setFontSize(4.5)
@@ -348,11 +365,10 @@ class Pdf {
         doc.text(`${dados.ENDERECO1}`, 11, 250)
         doc.text(`${dados.ENDERECO2}`, 11, 254)
     
-        //doc.text(`CPF${boleto[0].CNPJ_CPF_SACADO}`)
         doc.text(`CPF: ${this.formataCPF(dados.CNPJ_CPF_SACADO)}`, 165, 246)
         doc.text(`Contrato: ${dados.CONTRATO}`,165, 250 )
     }
-    // carrega codigo de barra
+
     desenharBarra(doc, largura, altura, preenchido) {
         try{
 
@@ -371,8 +387,8 @@ class Pdf {
             console.log("Erro ao desenhar Barras:", erro)
         }
     }
-    // cria o codigo de barra
-    gerarCodigoBarra(doc, valor) {
+
+    gerar_codigo_barra(doc, valor) {
         
         let codigo = '';
         const a = 0.27;
@@ -431,12 +447,12 @@ class Pdf {
       
         return codigo;
     }
-    // Salva o arquivo em pdf
+
     salve(path){
-        this.doc.save(`${path}${this.fileName.replace(/\s+/g, "")}.pdf`)
+        this.documento.save(`${path}${this.fileName.replace(/\s+/g, "")}.pdf`)
     }
 }
-// exporta o objeto
-module.exports = {
-    Pdf
-}
+
+// ======================================== EXPORTAÇÃO ======================================== //
+
+module.exports = { Pdf }

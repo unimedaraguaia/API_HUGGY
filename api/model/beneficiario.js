@@ -1,45 +1,44 @@
+// ======================== IMPORTAÇÕES =========================== //
 const db = require('oracledb')
 const banco = require('./banco')
 
+// ==================== CLASSE DE BENEFICIARIO =================== //
 class Beneficiario {
     
-    // verifica se o cpf passado pertence a um titular ativo
-    async ehTitularAtivo(cpf){
-        let conexao
-        try{
-            conexao = await banco.conectarBanco()
-            const resultado = await conexao.execute(
+    async buscar_titular_ativo_guias(numeroCpf){
+        let conexaoBanco
+        try {
+            conexaoBanco = await banco.conectarBanco()
+            const resultadoTitular = await conexaoBanco.execute(
                 `
-                SELECT U.NNUMETITU, U.CNOMEUSUA, U.NNUMEUSUA
+                SELECT U.NNUMETITU, U.CNOMEUSUA, U.NNUMEUSUA, U.NNUMEPESS
                 FROM HSSUSUA U
-                WHERE U.C_CPFUSUA = :cpf
+                WHERE U.C_CPFUSUA = :numeroCpf
                 AND U.CSITUUSUA = 'A'
                 AND U.CTIPOUSUA = 'T'
                 `,
-                {cpf},
+                {numeroCpf},
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
-            console.log(resultado.rows)
-            return resultado
-        }catch(erro){
+            console.log(`[API] Sucesso ao buscar beneficiário titular\n`)
+            return resultadoTitular
+        } catch(erro) {
+            console.log(`[API] Falha ao buscar beneficiario titular\n`)
             throw erro
-        }finally{
-            banco.desconectarBanco(conexao)
+        } finally {
+            banco.desconectarBanco(conexaoBanco)
         }
     }
   
-    // FUNÇÕES PARA FINS DE 2º VIA DE BOLETOS
-
-    // Verifica se o cpf passado é de um titular ativo que pode obter o boleto online
-    async buscarTitularBoletoCpf(cpf){
-        let conexao 
+    async buscar_titular_boleto_cpf(numeroCpf) {
+        let conexaoBanco 
         try {
-            conexao = await banco.conectarBanco()
-            const resultado = await conexao.execute(
+            conexaoBanco = await banco.conectarBanco()
+            const resultadoTitular = await conexaoBanco.execute(
                 `
-                SELECT U.NNUMETITU, U.CNOMEUSUA
+                SELECT U.NNUMETITU, U.CNOMEUSUA, U.NNUMEUSUA, U.NNUMEPESS
                 FROM HSSUSUA U, HSSPLAN P, HSSTITU T
-                WHERE U.C_CPFUSUA = :CPF
+                WHERE U.C_CPFUSUA = :numeroCpf
                 AND U.CTIPOUSUA = 'T'
                 AND U.CSITUUSUA = 'A'
                 AND U.NNUMEPLAN = P.NNUMEPLAN
@@ -48,25 +47,28 @@ class Beneficiario {
                 AND ((T.CBOLETITU = 'S') OR (T.CBOLETITU IS NULL))
                 AND T.NNUMELOPG = 82607630
                 `,
-                {cpf},
+                {numeroCpf},
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
-            return resultado
-        }catch(erro) {
+            console.log(`[API] Sucesso ao buscar titular pelo CPF\n`)
+            return resultadoTitular
+        }
+        catch(erro) {
+            console.error(` > Erro ao buscar titular do bolero pelo cpf\n`)
             throw erro
-        }finally {
-            banco.desconectarBanco(conexao)
+        }
+        finally {
+            banco.desconectarBanco(conexaoBanco)
         }
     }
 
-    // verifica se o numero de carteirinha passado é um de um titular ativo que pode ter obter boleto online
-    async buscarTitularBoletoCarteira(carteira){
-        let conexao
-        try{
-            conexao = await banco.conectarBanco()
-            const consulta  = await conexao.execute(
+    async buscar_titular_boleto_carteira(numeroCarteira) {
+        let conexaoBanco
+        try {
+            conexaoBanco = await banco.conectarBanco()
+            const resultadoTitular  = await conexaoBanco.execute(
                 `
-                SELECT U.NNUMETITU, U.CNOMEUSUA
+                SELECT U.NNUMETITU, U.CNOMEUSUA, U.NNUMEUSUA, U.NNUMEPESS
                 FROM HSSUSUA U, HSSTITU T, HSSPLAN P
                 WHERE U.CCODIUSUA = :carteira 
                 AND U.CSITUUSUA = 'A'
@@ -77,35 +79,38 @@ class Beneficiario {
                 AND ((T.CBOLETITU = 'S') OR (T.CBOLETITU IS NULL))
                 AND T.NNUMELOPG = 82607630
                 `,
-                {carteira},
+                {numeroCarteira},
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
-            return consulta
-        }catch(erro){
+            console.log(`[API] Sucesso ao buscar titular por meio da carteira\n`)
+            return resultadoTitular
+        }
+        catch(erro) {
+            console.log(`[API] Erro ao buscar titular por meio da carteira\n`)
             throw erro
-        }finally{
-            banco.desconectarBanco(conexao)
+        }
+        finally {
+            banco.desconectarBanco(conexaoBanco)
         }
     }
 
-    // verifica se os digitos passados é um cpf ou uma carteirinha de um titular que pode obter o boleto online
-    async buscarTitularBoleto(digitos){
+    async buscar_titular_boleto(digitos) {
         try {
             if(digitos.length == 11) {
-                const consulta = await this.buscarTitularBoletoCpf(digitos) 
-                return consulta
+                const consultaTitular = await this.buscar_titular_boleto_cpf(digitos) 
+                return consultaTitular
             }
             else if(digitos.length == 16) {
-                const consulta = await this.buscarTitularBoletoCarteira(digitos)
-                return consulta
+                const consultaTitular = await this.buscar_titular_boleto_carteira(digitos)
+                return consultaTitular
             }
         }
         catch(erro) {
+            console.log(`[API] Erro ao buscar titular do boleto\n`)
             throw erro
         }
     }
+    
 }
-
-module.exports = {
-    Beneficiario
-}
+// ======================== EXPORTANDO =========================== //
+module.exports = { Beneficiario }

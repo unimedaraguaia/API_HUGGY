@@ -1,17 +1,20 @@
-// IMPORTACOES
+// ==================== IMPORTACOES ====================== //
 const rotas = require('express').Router()
 const controlador = require('../controller/controlador')
 
-// CONFIGURANDO ROTAS
+// ================== ROTAS DE GET ===================== //
+rotas.get('/titularGuias',  controlador.buscar_titular_guias)
+rotas.get('/titularBoleto', controlador.buscar_titular_boleto_digitos)
+rotas.get('/boleto', controlador.buscar_boletos)
+rotas.get('/guia', controlador.buscar_guia)
+rotas.get('/listarGuias', controlador.listar_guias)
 
-rotas.get('/titular/:cpf', controlador.buscarTitular)
-// rota para pegar id e nome de um titular que tenha acesso a boletos
-rotas.get('/titularBoleto/:digitos', controlador.buscarTitularBoletoDigitos)
-// rota para pegar os boletos por meio do codigo do titular
-rotas.get('/boleto/:codigoTitular', controlador.buscarBoleto)
-// rota de aceso aos dados da guia pelo numero da mesma
-rotas.get('/guias/:numeroGuia', controlador.buscarGuia)
-// lista todas as guias de um beneficiario titular
-rotas.get('/listarGuias/:codigoTitular', controlador.listarGuias)
-// EXPORTACOES
-module.exports = rotas 
+// ======================= ROTAS DE POST ========================= //
+rotas.post('/gerarProtocolo', controlador.criar_protocolo)
+rotas.post('/adicionarAtendimentoBoleto', controlador.adicionar_atendimento)
+rotas.post('/adicionarAtendimentoGuias', controlador.adicionar_atendimento)
+rotas.post('/insereMensagemAtendimento', controlador.adicionar_mensagem_atendimento_boleto)
+rotas.post('/fecharAtendimento', controlador.fechar_atendimento)
+
+// ====================== EXPORTACOES ============================ //
+module.exports = rotas
