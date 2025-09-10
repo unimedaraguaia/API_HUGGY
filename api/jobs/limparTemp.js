@@ -14,7 +14,6 @@ function verificarArquivos(pasta, limiteMinutos) {
             const caminho = path.join(pasta, arquivo);
             const stats = fs.statSync(caminho);
             const idadeMinutos = (agora - stats.birthtimeMs) / (1000 * 60);
-            console.log(idadeMinutos)
 
             if (idadeMinutos >= limiteMinutos) {
                 fs.unlinkSync(caminho);
