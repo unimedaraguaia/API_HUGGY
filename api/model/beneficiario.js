@@ -11,7 +11,7 @@ class Beneficiario {
             conexaoBanco = await banco.conectarBanco()
             const resultadoTitular = await conexaoBanco.execute(
                 `
-                SELECT U.NNUMETITU, U.CNOMEUSUA, U.NNUMEUSUA
+                SELECT U.NNUMETITU, U.CNOMEUSUA, U.NNUMEUSUA, U.NNUMEPESS
                 FROM HSSUSUA U
                 WHERE U.C_CPFUSUA = :numeroCpf
                 AND U.CSITUUSUA = 'A'
@@ -22,14 +22,10 @@ class Beneficiario {
             )
             console.log(`[API] Sucesso ao buscar beneficiário titular\n`)
             return resultadoTitular
-        }
-        catch(erro) {
-            // Exibe a mensagem e lança a exception
+        } catch(erro) {
             console.log(`[API] Falha ao buscar beneficiario titular\n`)
             throw erro
-        }
-        finally {
-            // fecha a conexão com o banco de dados
+        } finally {
             banco.desconectarBanco(conexaoBanco)
         }
     }
