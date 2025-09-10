@@ -1,4 +1,5 @@
 // ==================================== IMPORTACOES ============================ //
+const rotas = require('../routes/rotas')
 const banco = require('./banco')
 const db = require('oracledb')
 
@@ -22,7 +23,6 @@ class Guia{
                 {idTitular},
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
-            // Pega somente guias liberadas
             for (let i = 0; i < listaGuias.rows.length; i++) {
                 let dadosGuia = await this.pegar_dados_guia_listada(listaGuias.rows[i]['NNUMEGUIA'], conexaoBanco) 
                 if(dadosGuia.rows[0].STATUS == 'Liberada') {
@@ -30,10 +30,11 @@ class Guia{
                 }
             }
             listaGuias.rows = listaGuia
+            //listaGuias.rows['numerosguias'] = numerosGuias
             return listaGuias
         }
         catch(erro) {
-            console.log("[API] Erro ao listar guias do beneficiário")
+            console.log("[API] Erro ao listar guias do beneficiário", erro)
             throw erro
         }
         finally {
@@ -41,7 +42,7 @@ class Guia{
         }
     }
     
-    async pegar_dados_guia(numeroGuia) {
+    async pegar_dados_guia(numeroGuia, numeroUsuario) {
         let conexaoBanco
         try{
             conexaoBanco = await banco.conectarBanco()
@@ -55,19 +56,21 @@ class Guia{
                 NOME_OPERADOR,
                 ID_USUARIO,
                 TO_CHAR(EMISSAO, 'DD/MM/YYYY') AS EMISSAO, 
-                TO_CHAR(VALIDADE, 'DD/MM/YYYY') AS VALIDADE,
-                TO_CHAR(PROCEDIMENTOS) AS PROCEDIMENTOS
+                TO_CHAR(VALIDADE, 'DD/MM/YYYY') AS VALIDADE
                 FROM TABLE(PKG_GUIA.DADOS_GUIA(:numeroGuia))
                 `,
                 {numeroGuia},
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
-            //delete dadosGuia.rows[0]['PROCEDIMENTOS'];
-            const procedimentos = await this.pegar_procedimentos_guia(numeroGuia, conexaoBanco)
+            //const procedimentos = await this.pegar_procedimentos_guia(numeroGuia, conexaoBanco)
             if(dadosGuia.rows[0]['NOME_OPERADOR'] == null){
                 dadosGuia.rows[0]['NOME_OPERADOR'] = " "
             }
-            dadosGuia.rows[0]['PROCEDIMENTOS'] = procedimentos
+            if(dadosGuia.rows[0]['ID_USUARIO'] != Number(numeroUsuario)) {
+                dadosGuia.rows = []
+                return dadosGuia
+            }
+            
             return dadosGuia
 
         }catch(erro){
@@ -122,23 +125,17 @@ class Guia{
         }
     }
 
-    pegar_dados_procedimentos(listaProcedimentos) {
-        let procedimentos = {}
-        for(let indice = 0; indice < listaProcedimentos.length; indice++) {
-            let status
-            if(listaProcedimentos[indice].CSTATPGUI == 'N'){
-                status = "Não Liberado"
-            } else {
-                status = "Liberado"
-            }
-            procedimentos[`procedimento${indice + 1}`] = {
-                "nome": listaProcedimentos[indice].CNOMEPMED,
-                "status": `${status}`
-            }
+    pegar_numeros_guias(listaGuias) {
+        let numeroGuia = {}
+        for(let indice = 0; indice < 3; indice++) {
+           if(indice < listaGuias.length) {
+                numeroGuia[`numeros${indice+1}`] = listaGuias[indice]['NNUMEGUIA']
+           } else {
+            numeroGuia[`numeros${indice+1}`] = ''
+           }
         }
-        return procedimentos
+        return numeroGuia
     }
 }
-
 // =============================== EXPORTANDO =================================== //
 module.exports = { Guia }
