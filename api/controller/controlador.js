@@ -53,7 +53,12 @@ const buscar_titular_guias = async (req, res) => {
                     status:{
                         sucesso:"✅"
                     },
-                    titular: dadosTitular.rows[0]
+                    titular: {
+                        numerotitular: dadosTitular.rows[0].NNUMETITU,
+                        nome: dadosTitular.rows[0].CNOMEUSUA,
+                        numerousua:dadosTitular.rows[0].NNUMEUSUA,
+                        idpessoa:dadosTitular.rows[0].NNUMEPESS
+                    }
                 }
             )
         } 
@@ -123,15 +128,30 @@ const pegar_link = async (req, res) => {
 }
 
 const buscar_guia = async (req, res) => {
-    const { numeroGuia } = req.params
+    const { numero, numerousuario } = req.headers
     try {
         const Guia = new guia.Guia()
-        const resultado = await Guia.pegar_dados_guia(numeroGuia)
+        const resultado = await Guia.pegar_dados_guia(numero, numerousuario)
         if(resultado.rows.length > 0) {
             res.status(200).json(
                 { 
                     mensagem:"200",
-                    guia: resultado.rows[0]
+                    guia: {
+                        idguia : resultado.rows[0]['ID_GUIA'],
+                        status : resultado.rows[0]['STATUS'],
+                        tipoguia: resultado.rows[0]['TIPO_GUIA'],
+                        prestador: resultado.rows[0]['NOME_PRESTADOR'],
+                        operador: resultado.rows[0]['NOME_OPERADOR'],
+                        idusuario: resultado.rows[0]['ID_USUARIO'],
+                        emissao: resultado.rows[0]['EMISSAO'],
+                        validade: resultado.rows[0]['VALIDADE']
+                    },
+                    numeros: {
+                        numero1: resultado.rows[0]['ID_GUIA'],
+                        numero2: '',
+                        numero3: ''
+                    }
+                   
                 }
             )
         } else {
@@ -142,7 +162,7 @@ const buscar_guia = async (req, res) => {
             )
         }
     } catch(erro) {
-        console.log("[API] falha ao buscar guia")
+        console.log("[API] falha ao buscar guia", erro)
         res.status(200).json(
             {
                 mensagem:"500"
@@ -152,10 +172,11 @@ const buscar_guia = async (req, res) => {
 }
 
 const listar_guias = async (req, res) => {
-    const { codigoTitular } = req.params
+    const {numerousuario} = req.headers
     try {
         const Guia = new guia.Guia()
-        const resultado = await Guia.listar_guias_beneficiario(codigoTitular)
+        const resultado = await Guia.listar_guias_beneficiario(numerousuario)
+        
         if(resultado.rows.length > 0) {
             resposta = { 
                 mensagem:'200',
@@ -163,9 +184,22 @@ const listar_guias = async (req, res) => {
                     guia:"📋"
                 } 
             }
+            
             for (let i = 0; i < resultado.rows.length; i++) {
                 resposta[`guia${i + 1}`] = resultado.rows[i]
             }
+
+            let numeroGuias = {}
+
+            for (let indice = 0; indice < 3; indice++) {
+                if(indice < resultado.rows.length) {
+                    numeroGuias[`numero${indice+1}`] = resultado.rows[indice]['ID_GUIA']
+                } else {
+                    numeroGuias[`numero${indice+1}`] = ''
+                }
+            }
+            resposta[`numeros`] = numeroGuias
+            console.log("[API] Guias encontradas")
             res.status(200).json(resposta);
         } else {
             console.log('[API] nenhuma guia encontrada')
@@ -176,7 +210,7 @@ const listar_guias = async (req, res) => {
             )
         }
     } catch(erro) {
-        console.log('[API] Erro ao lista guias')
+        console.log('[API] Erro ao lista guias', erro)
         res.status(200).json(
             {
                 mensagem:"500"
@@ -185,11 +219,11 @@ const listar_guias = async (req, res) => {
     }
 }
 
-const criar_protocolo_boleto = async (req, res) => {
+const criar_protocolo = async (req, res) => {
     const { idpessoa } = req.headers
     try {
         const Protocolo = new protocolo.Protocolo()
-        const resultado = await Protocolo.criar_protocolo_segunda_via_boleto(idpessoa)
+        const resultado = await Protocolo.criar_protocolo(idpessoa)
         if(resultado.status == '200') {
             res.status(200).json(
                 {
@@ -226,7 +260,7 @@ const adicionar_atendimento = async (req, res) => {
 
     try {
         const Atendimento = new atendimento.Atendimento()
-        const resultado = await Atendimento.criar_atendimento_segunda_via_boleto(idprotocolo, idusuario, tipoatendimento)  
+        const resultado = await Atendimento.criar_atendimento(idprotocolo, idusuario, tipoatendimento)  
         if(resultado.status == "200" && resultado.atendimento.id > 0) {  
             console.log(`[API] Sucesso ao criar atendimento`)
             res.status(200).json(
@@ -328,8 +362,8 @@ module.exports = {
     pegar_link,
     buscar_guia, 
     listar_guias, 
-    criar_protocolo_boleto,
-    adicionar_atendimento,
+    criar_protocolo,
+    adicionar_atendimento, 
     adicionar_mensagem_atendimento_boleto,
     fechar_atendimento
 }
