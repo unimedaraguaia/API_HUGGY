@@ -5,7 +5,7 @@ const db = require('oracledb')
 // ========================== CLASSE DE ATENDIMENTO ==================== //
 class Atendimento {
     
-    async criar_atendimento_segunda_via_boleto(idProtocolo, idPessoa, tipoAtendimento) {
+    async criar_atendimento(idProtocolo, idPessoa, tipoAtendimento) {
         let conexaoBanco
         try {
             conexaoBanco = await banco.conectarBanco()
@@ -72,7 +72,7 @@ class Atendimento {
                     pIdAtendimento => :idAtendimento,
                     pTexto => :mensagem,
                     pIdTipoMensagem => 4,
-                    pIdOperador => 63737,
+                    pIdOperador => 2432482,
                     pPtu => :pPtu,
                     pTipoMensagem => 'E',
                     pIdTransacaoPrestadora => :pIdTransacaoPrestadora,
@@ -140,7 +140,7 @@ class Atendimento {
                     -- Call the procedure
                     PKG_ATENDIMENTO_CRM.finalizar_crm(
                         p_atendimento => :idAtendimento,
-                        p_operador => 63737,
+                        p_operador => 2432482,
                         p_guia => :p_guia
                     );
                 END;
