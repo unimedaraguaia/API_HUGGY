@@ -70,7 +70,7 @@ class Beneficiario {
                 `
                 SELECT U.NNUMETITU, U.CNOMEUSUA, U.NNUMEUSUA, U.NNUMEPESS
                 FROM HSSUSUA U, HSSTITU T, HSSPLAN P
-                WHERE U.CCODIUSUA = :carteira 
+                WHERE U.CCODIUSUA = :numeroCarteira 
                 AND U.CSITUUSUA = 'A'
                 AND U.CTIPOUSUA = 'T'
                 AND U.NNUMEPLAN = P.NNUMEPLAN
