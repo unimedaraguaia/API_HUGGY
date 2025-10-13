@@ -101,9 +101,11 @@ class Boleto {
                 
                 let numeroDocumentoPago = dadosBoleto.NDOCUPAGA
                 let idPagamento = dadosBoleto.ID_PAGAMENTO
-                
+                //console.log(dadosBoleto)
+
                 let valor = await this.verifica_homologacao(numeroDocumentoPago, idPagamento, conectorBanco)
-                if(valor == 'S') {
+                console.log(valor)
+                if(valor) {
                     let boleto = new pdf.Pdf(dadosBoleto)
                     //console.log(dadosBoleto)
                     let localArquivo = `${process.env.ADDRESS_SERVICE}:${NGINX_PORT}/temp/${dadosBoleto.NUMERO_DOCUMENTO.replace(/\s+/g, "")}.pdf`
@@ -188,7 +190,9 @@ class Boleto {
                     numeroDocumentoPago: numeroDocumentoPago
                 }
             )
-            if (homologado === 'S') {
+
+            console.log(idPagamento, numeroDocumentoPago, homologado.rows[0][0])
+            if (homologado.rows[0][0] === 'S') {
                 return true;
             } else {
                 return false;
