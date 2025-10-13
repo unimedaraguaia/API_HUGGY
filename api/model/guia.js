@@ -6,7 +6,7 @@ const db = require('oracledb')
 // ================================= CLASSE GUIAS ================================ //
 class Guia{
     
-    async listar_guias_beneficiario(idTitular) {
+    async listar_guias_beneficiario(numeroUsuario) {
         let conexaoBanco
         let listaGuia = []
         try{
@@ -16,11 +16,11 @@ class Guia{
                 SELECT 
                 G.NNUMEGUIA
                 FROM HSSGUIA G
-                WHERE G.NNUMEUSUA = :idTitular
+                WHERE G.NNUMEUSUA = :numeroUsuario
                 ORDER BY G.NNUMEGUIA DESC
                 FETCH FIRST 3 ROWS ONLY
                 `,
-                {idTitular},
+                {numeroUsuario},
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
             for (let i = 0; i < listaGuias.rows.length; i++) {
