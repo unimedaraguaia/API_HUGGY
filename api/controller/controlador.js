@@ -41,11 +41,11 @@ const buscar_titular_boleto_digitos = async (req, res) => {
     }
 }
 
-const buscar_titular_guias = async (req, res) => {
+const buscar_beneficiario_guias = async (req, res) => {
     const { cpf } = req.headers
     try {
         const Beneficiario = new beneficiario.Beneficiario()
-        const dadosTitular = await Beneficiario.buscar_titular_ativo_guias(cpf)
+        const dadosTitular = await Beneficiario.buscar_beneficiario_ativo_guias(cpf)
         if (dadosTitular.rows.length > 0) {
             res.status(200).json(
                 { 
@@ -54,7 +54,7 @@ const buscar_titular_guias = async (req, res) => {
                         sucesso:"✅"
                     },
                     titular: {
-                        numerotitular: dadosTitular.rows[0].NNUMETITU,
+                        //numerotitular: dadosTitular.rows[0].NNUMETITU,
                         nome: dadosTitular.rows[0].CNOMEUSUA,
                         numerousua:dadosTitular.rows[0].NNUMEUSUA,
                         idpessoa:dadosTitular.rows[0].NNUMEPESS
@@ -358,7 +358,7 @@ const fechar_atendimento = async (req, res) => {
 module.exports = {
     buscar_boletos,
     buscar_titular_boleto_digitos,
-    buscar_titular_guias,
+    buscar_beneficiario_guias,
     pegar_link,
     buscar_guia, 
     listar_guias, 
