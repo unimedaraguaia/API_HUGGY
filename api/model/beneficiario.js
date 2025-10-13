@@ -5,7 +5,7 @@ const banco = require('./banco')
 // ==================== CLASSE DE BENEFICIARIO =================== //
 class Beneficiario {
     
-    async buscar_titular_ativo_guias(numeroCpf){
+    async buscar_beneficiario_ativo_guias(numeroCpf){
         let conexaoBanco
         try {
             conexaoBanco = await banco.conectarBanco()
@@ -15,7 +15,6 @@ class Beneficiario {
                 FROM HSSUSUA U
                 WHERE U.C_CPFUSUA = :numeroCpf
                 AND U.CSITUUSUA = 'A'
-                AND U.CTIPOUSUA = 'T'
                 `,
                 {numeroCpf},
                 {outFormat:db.OUT_FORMAT_OBJECT}
