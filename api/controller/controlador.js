@@ -18,9 +18,9 @@ const buscar_titular_boleto_digitos = async (req, res) => {
                 { 
                     mensagem:"200",
                     titular: {
-                        numerotitular: dadosTitular.rows[0].NNUMETITU,
+                        numerocontrato: dadosTitular.rows[0].NNUMETITU,
                         nome: dadosTitular.rows[0].CNOMEUSUA,
-                        numerousua:dadosTitular.rows[0].NNUMEUSUA,
+                        numerousuario:dadosTitular.rows[0].NNUMEUSUA,
                         idpessoa:dadosTitular.rows[0].NNUMEPESS
                     }
                 }
@@ -80,10 +80,10 @@ const buscar_beneficiario_guias = async (req, res) => {
 }
 
 const buscar_boletos = async (req, res) => {
-    const {numerotitular} = req.headers;
+    const {numerousuario, numerocontrato} = req.headers;
     try {
         const Boleto = new boleto.Boleto()
-        const dadosBoletos = await Boleto.buscar_boletos_titular(numerotitular)
+        const dadosBoletos = await Boleto.buscar_boletos_titular(numerousuario, numerocontrato)
         if (dadosBoletos.rows.length > 0) {
             resposta = {
                 mensagem:'200',
@@ -140,8 +140,8 @@ const buscar_guia = async (req, res) => {
                         idguia : resultado.rows[0]['ID_GUIA'],
                         status : resultado.rows[0]['STATUS'],
                         tipoguia: resultado.rows[0]['TIPO_GUIA'],
-                        prestador: resultado.rows[0]['NOME_PRESTADOR'],
-                        operador: resultado.rows[0]['NOME_OPERADOR'],
+                        solicitante: resultado.rows[0]['NOME_SOLICITANTE'],
+                        executante: resultado.rows[0]['NOME_PRESTADOR'],
                         idusuario: resultado.rows[0]['ID_USUARIO'],
                         emissao: resultado.rows[0]['EMISSAO'],
                         validade: resultado.rows[0]['VALIDADE']
@@ -181,14 +181,20 @@ const listar_guias = async (req, res) => {
             resposta = { 
                 mensagem:'200',
                 status:{
-                    guia:"📋"
+                    guia:'OK'
                 } 
             }
             
             for (let i = 0; i < resultado.rows.length; i++) {
-                resposta[`guia${i + 1}`] = resultado.rows[i]
+                resposta[`guia${i + 1}`] = {
+                    idguia:resultado.rows[i]['ID_GUIA'],
+                    emissao:resultado.rows[i]['EMISSAO'],
+                    tipoguia:resultado.rows[i]['TIPO_GUIA'],
+                    status:resultado.rows[i]['STATUS']
+                }
             }
-
+            
+            console.log(resposta)
             let numeroGuias = {}
 
             for (let indice = 0; indice < 3; indice++) {
