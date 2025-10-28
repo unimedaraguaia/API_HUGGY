@@ -42,9 +42,8 @@ class Beneficiario {
                 AND U.CSITUUSUA = 'A'
                 AND U.NNUMEPLAN = P.NNUMEPLAN
                 AND (U.NNUMETITU = T.NNUMETITU)
-                AND P.CNATUPLAN <> 3
+                AND T.CNATUTITU <> 3
                 AND ((T.CBOLETITU = 'S') OR (T.CBOLETITU IS NULL))
-                AND T.NNUMELOPG = 82607630
                 `,
                 {numeroCpf},
                 {outFormat:db.OUT_FORMAT_OBJECT}
@@ -73,10 +72,9 @@ class Beneficiario {
                 AND U.CSITUUSUA = 'A'
                 AND U.CTIPOUSUA = 'T'
                 AND U.NNUMEPLAN = P.NNUMEPLAN
-                AND P.CNATUPLAN <> 3
                 AND (U.NNUMETITU = T.NNUMETITU)
+                AND T.CNATUTITU <> 3
                 AND ((T.CBOLETITU = 'S') OR (T.CBOLETITU IS NULL))
-                AND T.NNUMELOPG = 82607630
                 `,
                 {numeroCarteira},
                 {outFormat:db.OUT_FORMAT_OBJECT}
