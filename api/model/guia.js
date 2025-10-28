@@ -24,13 +24,27 @@ class Guia{
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
             for (let i = 0; i < listaGuias.rows.length; i++) {
+
                 let dadosGuia = await this.pegar_dados_guia_listada(listaGuias.rows[i]['NNUMEGUIA'], conexaoBanco) 
-                if(dadosGuia.rows[0].STATUS == 'Liberada') {
-                    listaGuia.push(dadosGuia.rows[0])
-                }
+                
+                switch(dadosGuia.rows[0].STATUS) {
+                    case 'Liberada':
+                        listaGuia.push(dadosGuia.rows[0])
+                        break
+                    case 'Pedido de exame':
+                        listaGuia.push(dadosGuia.rows[0])
+                        break
+                    case 'Negada':
+                        listaGuia.push(dadosGuia.rows[0])
+                        break
+                    case 'Sob-auditoria':
+                        listaGuia.push(dadosGuia.rows[0])
+                        break
+               }
             }
+            
             listaGuias.rows = listaGuia
-            //listaGuias.rows['numerosguias'] = numerosGuias
+            
             return listaGuias
         }
         catch(erro) {
@@ -52,8 +66,8 @@ class Guia{
                 ID_GUIA, 
                 STATUS, 
                 TIPO_GUIA, 
+                NOME_SOLICITANTE,
                 NOME_PRESTADOR,
-                NOME_OPERADOR,
                 ID_USUARIO,
                 TO_CHAR(EMISSAO, 'DD/MM/YYYY') AS EMISSAO, 
                 TO_CHAR(VALIDADE, 'DD/MM/YYYY') AS VALIDADE
@@ -95,8 +109,6 @@ class Guia{
                 {numeroGuia},
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
-            //delete dadosGuia.rows[0]['PROCEDIMENTOS'];
-            //console.log(dadosGuia.rows[0])
             return dadosGuia
         } catch(erro) {
             console.log("[API] Erro ao pegar dados da guia listada")
@@ -115,7 +127,7 @@ class Guia{
                 {numeroGuia},
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
-            //console.log(procedimentos.rows)
+            
             const dadosProcedimento = this.pegar_dados_procedimentos(procedimentos.rows)
             return dadosProcedimento
 
