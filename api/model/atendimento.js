@@ -153,7 +153,7 @@ class Atendimento {
             try {
                 conexaoBanco.commit()
             } catch (erro) {
-                console.log(`[API] > fecha_atendimento: (Erro ao commitar procedure)\n${erro}`)
+                console.log(`[API] > fecha_atendimento: (Erro ao commitar procedure)\n`)
                 conexaoBanco.rollback()
                 return {
                     status:"500"
