@@ -9,23 +9,40 @@ const pathPdf = path.join(__dirname, "../temp/")
 // ============================ CLASSE PARA BOLETO ================================= //
 class Boleto {
 
-    async buscar_boletos_titular(codigoTitular) {
+    async buscar_boletos_titular(codigoUsuarioTitular, codigoContrato) {
         let conexao
         try {
             conexao = await banco.conectarBanco()
-            const boletos = await conexao.execute(
+            
+            let boletos = await conexao.execute(
                 `
                 SELECT P.NNUMEPAGA, TO_CHAR(P.DVENCPAGA, 'DD/MM/YYYY') AS DVENCPAGA, P.NVENCPAGA, P.CINSTPAGA, P.CCOMPPAGA
                 FROM HSSPAGA P
-                WHERE P.NNUMETITU = :CODIGOTITULAR 
+                WHERE P.NNUMEUSUA = :codigoUsuarioTitular
                 AND P.DVENCPAGA >= ADD_MONTHS(CURRENT_DATE, -3)
                 AND P.CPAGOPAGA = 'N'
                 `,
-                {codigoTitular},
+                {codigoUsuarioTitular},
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
 
+            if(boletos.rows.length  <= 0) {
+                boletos = await conexao.execute(
+                    `
+                    SELECT P.NNUMEPAGA, TO_CHAR(P.DVENCPAGA, 'DD/MM/YYYY') AS DVENCPAGA, P.NVENCPAGA, P.CINSTPAGA, P.CCOMPPAGA
+                    FROM HSSPAGA P
+                    WHERE P.NNUMETITU = :codigoContrato
+                    AND P.DVENCPAGA >= ADD_MONTHS(CURRENT_DATE, -3)
+                    AND P.CPAGOPAGA = 'N'
+                    `,
+                    {codigoContrato},
+                    {outFormat:db.OUT_FORMAT_OBJECT}
+                )
+            }
+
             boletos.rows = this.remover_boletos_parcelados(boletos.rows)
+
+            
             
             let listaIdsBoletos = this.pegar_id_boletos(boletos)
             let listaEndereco = await this.criar_boletos_pegar_local_arquivo(boletos, conexao)
