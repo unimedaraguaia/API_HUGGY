@@ -42,8 +42,6 @@ class Boleto {
 
             boletos.rows = this.remover_boletos_parcelados(boletos.rows)
 
-            
-            
             let listaIdsBoletos = this.pegar_id_boletos(boletos)
             let listaEndereco = await this.criar_boletos_pegar_local_arquivo(boletos, conexao)
 
@@ -102,7 +100,6 @@ class Boleto {
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
             
-            
             return dadosBoleto.rows[0]
 
         } catch(erro) {
@@ -110,7 +107,7 @@ class Boleto {
         }
     }
 
-    async criar_boletos_pegar_local_arquivo(boletos, conectorBanco){
+    async criar_boletos_pegar_local_arquivo(boletos, conectorBanco) {
         let endereco = []
         try {
             for(let indice = 0; indice < boletos.rows.length; indice++) {
@@ -130,8 +127,8 @@ class Boleto {
                     //localFile = this.encurtarLink(localFile)
                     endereco.push(localArquivo)
                 }
-
             }
+            
             return endereco
             
         } catch(erro) {
@@ -208,7 +205,7 @@ class Boleto {
                 }
             )
 
-            console.log(idPagamento, numeroDocumentoPago, homologado.rows[0][0])
+            //console.log(idPagamento, numeroDocumentoPago, homologado.rows[0][0])
             if (homologado.rows[0][0] === 'S') {
                 return true;
             } else {
