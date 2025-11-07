@@ -2,7 +2,7 @@
 const db = require('oracledb')
 const banco = require('./banco')
 const path = require('path');
-const { NGINX_PORT } = process.env; // constantes de porta do NGINX
+//const { NGINX_PORT } = process.env; // constantes de porta do NGINX
 const pdf = require('./pdf');
 const pathPdf = path.join(__dirname, "../temp/")
 
@@ -122,7 +122,7 @@ class Boleto {
                 if(valor) {
                     let boleto = new pdf.Pdf(dadosBoleto)
                     //console.log(dadosBoleto)
-                    let localArquivo = `${process.env.ADDRESS_SERVICE}:${NGINX_PORT}/temp/${dadosBoleto.NUMERO_DOCUMENTO.replace(/\s+/g, "")}.pdf`
+                    let localArquivo = `https://apihuggy.unimedaraguaia.coop.br:8009/temp/${dadosBoleto.NUMERO_DOCUMENTO.replace(/\s+/g, "")}.pdf`
                     boleto.salve(pathPdf)
                     //localFile = this.encurtarLink(localFile)
                     endereco.push(localArquivo)

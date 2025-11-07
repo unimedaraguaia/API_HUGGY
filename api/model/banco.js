@@ -8,7 +8,7 @@ const { NGINX_PORT } = process.env
 // ================================ FUNCOES DE BANCO ============================= //
 const conectarBanco = async () => {
     // linha para a ser abilitada para produção
-    //banco.initOracleClient({ libDir: process.env.PATH_ORACLE })
+    banco.initOracleClient({ libDir: process.env.PATH_ORACLE })
     try { 
         const keys = descriptografar_dados(SECRET_KEY, USER, PASS, CONNECT)
         const conexao = await banco.getConnection(

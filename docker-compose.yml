@@ -1,6 +1,7 @@
+version: '3.3'
 services:
   api:
-    container_name: api_huggy_tst
+    container_name: api_huggy_unimed
     build: ./api
     restart: always
     env_file:
@@ -9,8 +10,10 @@ services:
       - SECRET_KEY=${SECRET_KEY}
     
   nginx:
-    container_name: nginx_api
+    container_name: nginx_api_huggy
     build: ./nginx
     ports:
-      - 8009:80
+      - 8009:8009
+    depends_on:
+      - api
 

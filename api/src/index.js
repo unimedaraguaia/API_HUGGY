@@ -42,7 +42,7 @@ iniciarServidor(API, porta)
 
         console.log(
             `${cores.verde}[API_UNIMED_HUGGY] Servidor iniciado com sucesso${cores.reseta}\n` +
-            `${cores.verde}> Endereço: ${localServico}:${porta}${cores.reseta}\n` +
+            `${cores.verde}> Endereço: ${localServico}:${process.env.NGINX_PORT}${cores.reseta}\n` +
             `${cores.amarelo}> Ambiente: ${process.env.NODE_ENV || "desenvolvimento"}${cores.reseta}\n` +
             `${cores.verde}> Iniciado em: ${dataHora}${cores.reseta}`
         )
