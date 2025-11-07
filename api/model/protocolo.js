@@ -14,7 +14,7 @@ class Protocolo {
                 BEGIN
                     PKG_ATENDIMENTO_CRM.insere_protocolo(
                         p_id_pessoa => :idPessoa,               --id beneficiario--
-                        p_id_operador => 2432482,                 --id operado (deve ser trocado) [simira]--
+                        p_id_operador => 2482550,               --id operado [API]--
                         p_tipo_vinculo => 'B',                  --vinculo beneficiario--
                         p_id_forma_contato => 12,               --contato whatsApp--
                         p_id_protocolo => :p_id_protocolo,

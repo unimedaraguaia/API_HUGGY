@@ -15,7 +15,7 @@ class Atendimento {
                     PKG_ATENDIMENTO_CRM.insere_atendimento(
                         p_id_protocolo      =>  :idProtocolo,        
                         p_id_classificacao  =>  :tipoAtendimento,                 
-                        p_id_operador       =>  63737,              
+                        p_id_operador       =>  2482550,              
                         p_id_status         =>  18,                 
                         p_id_beneficiario   =>  :idPessoa,           
                         p_id_atendimento    =>  :p_id_atendimento,
@@ -72,7 +72,7 @@ class Atendimento {
                     pIdAtendimento => :idAtendimento,
                     pTexto => :mensagem,
                     pIdTipoMensagem => 4,
-                    pIdOperador => 2432482,
+                    pIdOperador => 2482550,
                     pPtu => :pPtu,
                     pTipoMensagem => 'E',
                     pIdTransacaoPrestadora => :pIdTransacaoPrestadora,
@@ -140,7 +140,7 @@ class Atendimento {
                     -- Call the procedure
                     PKG_ATENDIMENTO_CRM.finalizar_crm(
                         p_atendimento => :idAtendimento,
-                        p_operador => 2432482,
+                        p_operador => 2482550,
                         p_guia => :p_guia
                     );
                 END;
