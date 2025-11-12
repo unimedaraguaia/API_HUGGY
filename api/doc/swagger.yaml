@@ -1,5 +1,5 @@
 
-
+openapi: 3.0.3,
 paths:
 
   /titularBoleto:
@@ -268,12 +268,13 @@ components:
         titular:
           type: object
           description: numero do titular, nome do titular, numero usuário, numero pessoa
-          example: {
-            "numero_titular": 235000000,
-            "nome": "MARIA APARECIDA",
-            "numero_usua": 1000000,
-            "id_pessoa": 10000
-          }
+          example: | 
+            {
+              "numero_titular": 235000000,
+              "nome": "MARIA APARECIDA",
+              "numero_usua": 1000000,
+              "id_pessoa": 10000
+            }
 
     # schema boleto
     boletos:
@@ -286,15 +287,16 @@ components:
         boleto1:
           type: object
           description: dados do boleto
-          example: {
-            "NNUMEPAGA": 123456,
-            "DVENCPAGA": "20/03/2025",
-            "NVENCPAGA": 449.35,
-            "CINSTPAGA": NULL,
-            "CCOMPPAGA": "04/2025",
-            "LINHA_DIGITAVEL": "00000.00000 00000.000000 00000.000000 0 0000000000000",
-            "LOCAL_BOLETO": "http://minhaApI:0000/temp/NF000000B.pdf"
-          }   
+          example: |
+            {
+              "NNUMEPAGA": 123456,
+              "DVENCPAGA": "20/03/2025",
+              "NVENCPAGA": 449.35,
+              "CINSTPAGA": NULL,
+              "CCOMPPAGA": "04/2025",
+              "LINHA_DIGITAVEL": "00000.00000 00000.000000 00000.000000 0 0000000000000",
+              "LOCAL_BOLETO": "http://minhaApI:0000/temp/NF000000B.pdf"
+            }   
     
     # schema protocolo
     Protocolo:
@@ -369,12 +371,13 @@ components:
         guia1:
           type: object
           description: dados basicos das guias 
-          example: {
-            "ID_GUIA": 5692755,
-            "EMISSAO": "09/04/2025",
-            "TIPO_GUIA": "AMBULATORIAL",
-            "STATUS": "Liberada"
-          }
+          example: |
+            {
+              "ID_GUIA": 5692755,
+              "EMISSAO": "09/04/2025",
+              "TIPO_GUIA": "AMBULATORIAL",
+              "STATUS": "Liberada"
+            }
 
     guias: 
       type: object
@@ -386,24 +389,25 @@ components:
         guia: 
           type: object
           description: dados detalhados da guia1 
-          example: {
-            "ID_GUIA": 5692755,
-            "TIPO_GUIA": "AMBULATORIAL",
-            "NOME_PRESTADOR": "MEDBARRA SERVICOS HOSPITALARES LTDA",
-            "EMISSAO": "2025-04-10T01:14:24.000Z",
-            "VALIDADE": "2025-06-08T03:00:00.000Z",
-            "STATUS": "Liberada",
-            "PROCEDIMENTOS": {
-              "PROCEDIMENTO1": {
-                "name": "CONSULTA CLÍNICA",
-                "status": "Liberada"
-              },
-              "PROCEDIMENTO2": {
-                "name": "EXAME DE SANGUE",
-                "status": "Liberado"
+          example: |
+            {
+              "ID_GUIA": 5692755,
+              "TIPO_GUIA": "AMBULATORIAL",
+              "NOME_PRESTADOR": "MEDBARRA SERVICOS HOSPITALARES LTDA",
+              "EMISSAO": "2025-04-10T01:14:24.000Z",
+              "VALIDADE": "2025-06-08T03:00:00.000Z",
+              "STATUS": "Liberada",
+              "PROCEDIMENTOS": {
+                "PROCEDIMENTO1": {
+                  "name": "CONSULTA CLÍNICA",
+                  "status": "Liberada"
+                },
+                "PROCEDIMENTO2": {
+                  "name": "EXAME DE SANGUE",
+                  "status": "Liberado"
+                }
               }
             }
-          }
 
     # schema Mensagem Padrão
     Erro404:
