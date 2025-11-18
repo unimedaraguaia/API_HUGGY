@@ -12,9 +12,11 @@ class Boleto {
     async buscar_boletos_titular(codigoUsuarioTitular, codigoContrato) {
         let conexao
         try {
+            
+            let boletos = null
             conexao = await banco.conectarBanco()
             
-            let boletos = await conexao.execute(
+            boletos = await conexao.execute(
                 `
                 SELECT P.NNUMEPAGA, TO_CHAR(P.DVENCPAGA, 'DD/MM/YYYY') AS DVENCPAGA, P.NVENCPAGA, P.CINSTPAGA, P.CCOMPPAGA
                 FROM HSSPAGA P
@@ -26,7 +28,7 @@ class Boleto {
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
 
-            if(boletos.rows.length  <= 0) {
+            if(boletos.rows.length == 0) {
                 boletos = await conexao.execute(
                     `
                     SELECT P.NNUMEPAGA, TO_CHAR(P.DVENCPAGA, 'DD/MM/YYYY') AS DVENCPAGA, P.NVENCPAGA, P.CINSTPAGA, P.CCOMPPAGA
@@ -56,6 +58,7 @@ class Boleto {
             return boletos
             
         } catch (erro) {
+            console.log(`[API] Erro ao buscar boletos dos titulares: ${erro}\n`)
             throw erro
         } finally {
             banco.desconectarBanco(conexao)
@@ -184,35 +187,31 @@ class Boleto {
         return nomeArquivos
     }
 
-    async verifica_homologacao(numeroDocumentoPago, idPagamento, conectorBanco) {
+    async verifica_homologacao(idPagamento, conectorBanco) {
         try {
             const homologado = await conectorBanco.execute(
                 `
-                SELECT PKG_BOLETO_CLASS.LAYOUT_HOMOLOGADO(HSSLOPG.CLREMLOPG) HOMOLOGADO
-                FROM HSSPAGA,HSSLOPG
-                WHERE (:idPagamento > 0 and HSSPAGA.NNUMEPAGA = :idPagamento)
-                AND HSSPAGA.NNUMELOPG = HSSLOPG.NNUMELOPG
-                UNION
-                SELECT PKG_BOLETO_CLASS.LAYOUT_HOMOLOGADO(HSSLOPG.CLREMLOPG) HOMOLOGADO
-                FROM FINDOCU, HSSLOPG
-                WHERE (:numeroDocumentoPago > 0 and FINDOCU.NNUMEDOCU = :numeroDocumentoPago)
-                AND FINDOCU.NNUMECONT = HSSLOPG.NNUMECONT
-                AND HSSLOPG.CMODALOPG <> 'D'
+                SELECT HSSREMES.NNUMEREMES
+                FROM HSSREMES,HSSRREME,HSSPAGA
+                WHERE HSSREMES.NNUMEREMES = HSSRREME.NNUMEREMES
+                AND HSSRREME.NNUMEPAGA = HSSPAGA.NNUMEPAGA
+                AND HSSPAGA.NNUMEPAGA = :idPagamento
+                ORDER BY DDATAREMES DESC
                 `,
                 {
-                    idPagamento: idPagamento,
-                    numeroDocumentoPago: numeroDocumentoPago
+                    idPagamento: idPagamento
                 }
             )
 
             //console.log(idPagamento, numeroDocumentoPago, homologado.rows[0][0])
-            if (homologado.rows[0][0] === 'S') {
+            if (homologado.rows.length > 0) {
                 return true;
             } else {
                 return false;
             }
     
         } catch(erro) {
+            console.log(`[API] Erro ao verificar homologação\n${erro}\n`)
             throw erro
         } 
     }
