@@ -120,7 +120,7 @@ class Boleto {
                 let idPagamento = dadosBoleto.ID_PAGAMENTO
                 //console.log(dadosBoleto)
 
-                let valor = await this.verifica_homologacao(numeroDocumentoPago, idPagamento, conectorBanco)
+                let valor = await this.verifica_homologacao(idPagamento, conectorBanco)
                 console.log(valor)
                 if(valor) {
                     let boleto = new pdf.Pdf(dadosBoleto)
