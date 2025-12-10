@@ -56,7 +56,7 @@ const buscar_beneficiario_guias = async (req, res) => {
                     titular: {
                         //numerotitular: dadosTitular.rows[0].NNUMETITU,
                         nome: dadosTitular.rows[0].CNOMEUSUA,
-                        numerousua:dadosTitular.rows[0].NNUMEUSUA,
+                        numerousuario:dadosTitular.rows[0].NNUMEUSUA,
                         idpessoa:dadosTitular.rows[0].NNUMEPESS
                     }
                 }
