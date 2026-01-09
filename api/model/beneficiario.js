@@ -19,10 +19,10 @@ class Beneficiario {
                 {numeroCpf},
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
-            console.log(`[API] Sucesso ao buscar beneficiário titular\n`)
+            
             return resultadoTitular
         } catch(erro) {
-            console.log(`[API] Falha ao buscar beneficiario titular\n`)
+            
             throw erro
         } finally {
             banco.desconectarBanco(conexaoBanco)
@@ -48,11 +48,10 @@ class Beneficiario {
                 {numeroCpf},
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
-            console.log(`[API] Sucesso ao buscar titular pelo CPF\n`)
+            
             return resultadoTitular
         }
         catch(erro) {
-            console.error(` > Erro ao buscar titular do bolero pelo cpf\n`)
             throw erro
         }
         finally {
@@ -79,11 +78,11 @@ class Beneficiario {
                 {numeroCarteira},
                 {outFormat:db.OUT_FORMAT_OBJECT}
             )
-            console.log(`[API] Sucesso ao buscar titular por meio da carteira\n`)
+            
             return resultadoTitular
         }
         catch(erro) {
-            console.log(`[API] Erro ao buscar titular por meio da carteira\n`)
+            
             throw erro
         }
         finally {
@@ -103,7 +102,6 @@ class Beneficiario {
             }
         }
         catch(erro) {
-            console.log(`[API] Erro ao buscar titular do boleto\n`)
             throw erro
         }
     }
