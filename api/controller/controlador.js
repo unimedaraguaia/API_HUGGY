@@ -1,5 +1,6 @@
 // ===================== IMPORTACOES ========================== //
-const shortLinks = require('../util/encurtador')        
+const shortLinks = require('../util/encurtador')
+const logger = require('../src/logger')         
 const beneficiario = require('../model/beneficiario')
 const boleto = require("../model/boleto")
 const guia = require('../model/guia')
@@ -25,12 +26,14 @@ const buscar_titular_boleto_digitos = async (req, res) => {
                     }
                 }
             )
+            logger.info(`[API]> titular de boleto encontrado :[${digitos}]`)
         } else {
             res.status(200).json(
                 { 
                     mensagem: "404" 
                 }
             )
+            logger.warn(`[API]> titular de boleto nao encontado:[${digitos}]`)
         }
     } catch(erro) {
         res.status(200).json(
@@ -38,6 +41,7 @@ const buscar_titular_boleto_digitos = async (req, res) => {
                 mensagem: "500" 
             }
         )
+        logger.error(`[API]> busca de titular falhou :[${digitos}]\n${erro}`)
     }
 }
 
@@ -50,17 +54,15 @@ const buscar_beneficiario_guias = async (req, res) => {
             res.status(200).json(
                 { 
                     mensagem:"200",
-                    status:{
-                        sucesso:"✅"
-                    },
                     titular: {
-                        //numerotitular: dadosTitular.rows[0].NNUMETITU,
+                       
                         nome: dadosTitular.rows[0].CNOMEUSUA,
                         numerousuario:dadosTitular.rows[0].NNUMEUSUA,
                         idpessoa:dadosTitular.rows[0].NNUMEPESS
                     }
                 }
             )
+            logger.info(`[API]> beneficiario da guia encontrado :[${cpf}]\n`)
         } 
         else {
             res.status(200).json(
@@ -68,6 +70,7 @@ const buscar_beneficiario_guias = async (req, res) => {
                     mensagem: "404"
                 } 
             )
+            logger.warn(`[API]> beneficiário da guia não encontrado :[${cpf}]\n`)
         }
     }
     catch(erro) {
@@ -76,6 +79,7 @@ const buscar_beneficiario_guias = async (req, res) => {
                 mensagem: "500"
             } 
         )
+        logger.error(`[API]> ao buscar beneficio da guia :[${cpf}]${erro}\n`)
     }
 }
 
@@ -87,18 +91,13 @@ const buscar_boletos = async (req, res) => {
         if (dadosBoletos.rows.length > 0) {
             resposta = {
                 mensagem:'200',
-                status:{
-                   data:"🗓️",
-                   money:"💵",
-                   doc:"📄", 
-                   link:"🔗"
-                },
                 arquivos: dadosBoletos.rows.arquivos,
             }
             for (let i = 0; i < dadosBoletos.rows.length; i++) {
                 resposta[`boleto${i + 1}`] = dadosBoletos.rows[i]
             }
             res.status(200).json(resposta);
+            logger.info(`[API]> ao buscar boleto contrato: [${numerocontrato}]`)
         } else {
             console.log("[API] > Boletos nao encontrados")
             res.status(200).json(
@@ -106,6 +105,7 @@ const buscar_boletos = async (req, res) => {
                     mensagem: "404"
                 }
             )
+            logger.warn(`[API]> boleto nao encontado do contrato: [${numerocontrato}]`)
         }
     } catch(erro) {
         console.log("[API] Erro ao buscar boletos")
@@ -115,6 +115,7 @@ const buscar_boletos = async (req, res) => {
                 mensagem: "500"
             }
         )
+        logger.error(`[API]> ao buscar boleto do contrato :[${numerocontrato}]\n${erro}`)
     }
 }
 
@@ -154,12 +155,14 @@ const buscar_guia = async (req, res) => {
                    
                 }
             )
+            logger.info(`[API]> guia encontrada :[${numero}]`)
         } else {
             res.status(200).json(
                 {
                     mensagem:"404"
                 }
             )
+            logger.warn(`[API]> não encontrada a guia de numero :[${numero}]$`)
         }
     } catch(erro) {
         console.log("[API] falha ao buscar guia", erro)
@@ -168,6 +171,7 @@ const buscar_guia = async (req, res) => {
                 mensagem:"500"
             }
         )
+        logger.error(`[API]> falha ao buscar guia numero:[${numero}]\n${erro}`)
     }
 }
 
@@ -194,7 +198,6 @@ const listar_guias = async (req, res) => {
                 }
             }
             
-            console.log(resposta)
             let numeroGuias = {}
 
             for (let indice = 0; indice < 3; indice++) {
@@ -205,15 +208,15 @@ const listar_guias = async (req, res) => {
                 }
             }
             resposta[`numeros`] = numeroGuias
-            console.log("[API] Guias encontradas")
             res.status(200).json(resposta);
+            logger.info(`[API]> guias encontrada :[${numeroGuias}]${numero}]`)
         } else {
-            console.log('[API] nenhuma guia encontrada')
             res.status(200).json(
                 {
                     mensagem:"404"
                 }
             )
+            logger.warn(`[API]> nenhuma guia encontrada : [${numeroGuias}]\n`)
         }
     } catch(erro) {
         console.log('[API] Erro ao lista guias', erro)
@@ -222,6 +225,7 @@ const listar_guias = async (req, res) => {
                 mensagem:"500"
             }
         )
+        logger.error(`[API] Erro: na listagem de guias: [${numeroGuias}]\n${erro}\n`)
     }
 }
 
@@ -239,22 +243,23 @@ const criar_protocolo = async (req, res) => {
                         numero:resultado.numeroProtocolo
                     }
                 }
-            )  
+            )
+            logger.info(`[API]> protocolo criado\n`)  
         } else {
-            console.error('[API] Erro ao criar protocolo status diferente de 200')
             res.status(200).json(
                 {
                     mensagem:'500'
                 }
             )
+            logger.warn(`[API]> Erro ao criar protocolo status diferente de 200\n`)
         }
     } catch(erro) {
-        console.error('[API] Erro ao criar protocolo erro do catch')
         res.status(200).json(
             {
                 mensagem:'500'
             }
         )
+        logger.error(`[API]> ao criar protocolo erro capturado\n ${erro}\n`)
     }
 }
 
@@ -268,7 +273,6 @@ const adicionar_atendimento = async (req, res) => {
         const Atendimento = new atendimento.Atendimento()
         const resultado = await Atendimento.criar_atendimento(idprotocolo, idusuario, tipoatendimento)  
         if(resultado.status == "200" && resultado.atendimento.id > 0) {  
-            console.log(`[API] Sucesso ao criar atendimento`)
             res.status(200).json(
                 {
                     mensagem:"200",
@@ -277,13 +281,14 @@ const adicionar_atendimento = async (req, res) => {
                     }
                 }
             )
+            logger.info(`[API]> criado atendimento para: ${idusuario}`)
         } else {
-            console.error(`[API] Erro, não foi possivel criar atendimento status diferente de 200`)
             res.status(200).json(
                 {
                     mensagem: "500"
                 }
             )
+            logger.warn(`[API]> erro ao criar atendimento para: ${idusuario} codigo de retorno diferente de 200`)
         }
     } catch(erro) {
         console.error(`[API] Erro a criar atendimento Lançamento de exception`)
@@ -292,6 +297,7 @@ const adicionar_atendimento = async (req, res) => {
                 mensagem: "500"
             }
         )
+        logger.error(`[API]>  ao criado atendimento para: [${idusuario}]´\n ${erro}`)
     }
 }
 
@@ -301,21 +307,21 @@ const adicionar_mensagem_atendimento_boleto = async (req, res) => {
         const Atendimento = new atendimento.Atendimento()
         const operacao = await Atendimento.adicionar_mensagem_atendimento_segunda_via_boleto(idatendimento, mensagem)
         if(operacao.status == "200") {
-            console.log(`[API] Mensagem adicionada`)
             res.status(200).json(
                 {
                     mensagem: "200",
                     info: `Mensagem adicionada ao atendimento ${idatendimento}`
                 }
             )
+            logger.info(`[API] Mensagem adicionada ao atendimento ${idatendimento}`)
         } else {
-            console.error(`[API] Erro ao adicionar mensagem boletos (Status diferente de 200)`)
             res.status(500).json(
                 {
                     mensagem: "500",
                     info: `Falha ao adicionar mensagem no atendimento ${idatendimento}`
                 }
             )
+            logger.warn(`[API] Erro ao adicionar mensagem no atendimento ${idatendimento} Status diferente de 200`)
         }
     } catch(erro) {
         console.error(`[API] Erro ao adicionar mensagem (Excessão lançada)\n${erro}`)
@@ -325,6 +331,7 @@ const adicionar_mensagem_atendimento_boleto = async (req, res) => {
                 info: `Falha ao adicionar mensagem no atendimento ${idatendimento}`
             }
         )
+        logger.error(`[API] Erro ao adicionar mensagem no atendimento ${idatendimento} ${erro}`)
     }
 }
 
@@ -334,13 +341,13 @@ const fechar_atendimento = async (req, res) => {
         const Atendimento = new atendimento.Atendimento()
         const operacao = await Atendimento.fechar_atendimento_crm(idatendimento)
         if(operacao.status == "200") {
-            console.log(`[API] Atendimento fechado`)
             res.status(200).json(
                 {
                     mensagem: "200",
                     info: `Atendimento Fechado ${idatendimento}`
                 }
             )
+            logger.info(`$[API] Atendimento ${idatendimento} fechado`)
         } else {
             console.log(`[API] Atendimento nao fechado`)
             res.status(500).json(
@@ -351,13 +358,13 @@ const fechar_atendimento = async (req, res) => {
             )
         }
     } catch(erro) {
-        console.log(`[API] Atendimento não fechado (excessao)\n${erro}`)
         res.status(500).json(
             {
                 mensagem: "500",
                 info: `Falha ao fechar atendimento ${idatendimento}`
             }
         )
+        logger.error(`[API] Atendimento não fechado (excessao)\n${erro}`)
     }
 }
 // =========================================== EXPORTAÇÃO ============================================== //
